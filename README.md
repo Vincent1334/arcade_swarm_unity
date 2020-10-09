@@ -181,7 +181,7 @@ which would initialise a simulation with a 'hard' maze and a swarm which uses Ga
 
 
 ### [run.py](run.py)
-[run.py](run.py) uses [init.py](init.py) to implement the experiments used throughout the paper. It contains 9 predefined experiments which include:
+[run.py](run.py) uses [init.py](init.py) to implement the experiments. It contains several predefined experiments, for example:
 
 different swarm sizes
 different reliability percentages
