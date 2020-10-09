@@ -34,6 +34,8 @@ for example if you want to run experiment 20 you simply run the following comman
 ```python
 python3 run.py 20 
 ```
+### Classes
+![alt text](https://github.com/mdivband/arcade_swarm/blob/main/class_diagram.png)
 
 ### [sim.py](sim.py)
 
