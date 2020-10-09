@@ -35,7 +35,7 @@ for example if you want to run experiment 20 you simply run the following comman
 python3 run.py 20 
 ```
 
-### [objects.py](objects.py)
+### [sim.py](sim.py)
 
 [objects.py](objects.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
 
@@ -108,8 +108,8 @@ OBSTACLE INFO:
   -- TYPE: vertical, POSITION: (330, 240), VELOCITY: (0, 0)
 ```
 
-### [experiment.py](experiment.py)
-[experiment.py](experiment.py) allows for running a configurable simulation by parsing predefined arguments which are passed by the user. 
+### [init.py](init.py)
+[init.py](init.py) allows for running a configurable simulation by parsing predefined arguments which are passed by the user. 
 
 ##### List of predefined arguments:
 | Command       | Type   | Default     | Comments                                                                                                   |
@@ -154,7 +154,7 @@ Note that if a parameter is not specified, it will have its default value.
 
 An example experiment may be run with 
 ```python
-python3 experiment.py
+python3 init.py
 ```
 This will run a simulation with its default parameters. 
 
@@ -162,24 +162,24 @@ You can configure those parameters by using the various predefined commands list
 
 An example simulations may be 
 ```python
-python3 experiment.py -d_x 500 -d_y 500 -noise 10
+python3 init.py -d_x 500 -d_y 500 -noise 10
 ```
 which would initialise the disaster at (500, 500) and all agents will have a communication noise of 0.001, 
 
 ```python
-python3 experiment.py -size 5 -d_size 3 
+python3 init.py -size 5 -d_size 3 
 ```
 which would initialise only 5 drones and the disaster at (500, 500) and other 2 disasters at random locations or
 
 ```python
-python3 experiment.py -maze "hard" -gp "True" -w 0.005 -aging 0.995
+python3 init.py -maze "hard" -gp "True" -w 0.005 -aging 0.995
 ```
 which would initialise a simulation with a 'hard' maze and a swarm which uses Gaussian Processes (plus the right parameters so that drones avoid collisions with obstacles).
 
 
 
 ### [run.py](run.py)
-[run.py](run.py) uses [experiment.py](experiment.py) to implement the experiments used throughout the paper. It contains 9 predefined experiments which include:
+[run.py](run.py) uses [init.py](init.py) to implement the experiments used throughout the paper. It contains 9 predefined experiments which include:
 
 different swarm sizes
 different reliability percentages
@@ -190,12 +190,3 @@ constant repulsion
 mazes
 
 These can also be greatly configured by passing different arguments to the functions in the run.py file.
-
-### [deep_q_modules.py](deep_q_modules.py)
-All the modules needed for running experiment 23 (Deep-Q-Learning) are in [deep_q_modules.py](deep_q_modules.py) file.
-
-These classes are being used inside the experiment function on line 207 to 367 of [experiment.py](experiment.py) file.
-
-The neural net initializations are being done from line 207 to 241 of [experiment.py](experiment.py) file.
-
-The main configurations for DQN inside step loop are done from line 331 to 359 of [experiment.py](experiment.py) file.
