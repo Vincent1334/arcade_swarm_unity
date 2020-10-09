@@ -26,7 +26,7 @@ _We recommend running the project on python3.8 but if you decided to run the pro
 You can run different experiment by running [run.py](run.py) file inside your terminal.
 
 ```python
-python3 run.py [experiment number (1-...)] 
+python3 run.py [experiment number] 
 ```
 
 for example if you want to run experiment 20 you simply run the following command:
