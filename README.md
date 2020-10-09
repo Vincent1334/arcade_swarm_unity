@@ -39,7 +39,7 @@ python3 run.py 20
 
 ### [sim.py](sim.py)
 
-[objects.py](objects.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
+[sim.py](sim.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
 
 It allows for creating and running an extremely configurable simulation based on the algorithms explained in the paper.
 
