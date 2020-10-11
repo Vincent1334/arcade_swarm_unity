@@ -132,8 +132,8 @@ def maze_experiments(maze_type = None, operator_range = [150, 100, 50], drone_ra
 def communication_noise(communication_noise_prob = [0.1, 0.25, 0.5, 0.75, 1]):
     cmds = []
     for p in communication_noise_prob:
-        cmds.append('-name "communication_noise experiment_{0}" -d_x 500 -d_y 500 -communication_noise_prob {0}'.format(p))
-        cmds.append('-name "communication_noise experiment_{0}" -d_x 100 -d_y 500 -communication_noise_prob {0}'.format(p))
+        #cmds.append('-name "communication_noise experiment_{0}" -d_x 500 -d_y 500 -communication_noise_prob {0}'.format(p))
+        #cmds.append('-name "communication_noise experiment_{0}" -d_x 100 -d_y 500 -communication_noise_prob {0}'.format(p))
         cmds.append('-name "communication_noise experiment_{0}" -d_x 300 -d_y 100 -communication_noise_prob {0}'.format(p))
     return cmds
 
@@ -165,7 +165,7 @@ def trim_cmd(cmd):
 
 if __name__ == "__main__":    
     exp = int(sys.argv[1])
-    N = 5
+    N = 1
     
     procs = []
     for _ in range(N):
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         elif exp == 20:
             cmds = ['-d_size 4 -size 3 -grid_x 100 -grid_y 100 -vis_range 1']
         elif exp == 21:
-            cmds = communication_noise(communication_noise_prob = [0.1, 0.25, 0.5, 0.75, 1])
+            cmds = communication_noise(communication_noise_prob = [0,.9,.95,.99])
         elif exp == 22:
             cmds = positioning_noise(positioning_noise_strength = [1, 2, 3], positioning_noise_prob = [0.25, 0.5, 0.75])
         elif exp == 23:

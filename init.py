@@ -1,7 +1,7 @@
 import time
 import os
 import arcade
-import objects
+import simulation
 import argparse
 
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
@@ -13,7 +13,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                gp = False, gp_step = 50, maze = None, through_walls = True,
                communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0, positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0):
     
-    sim = objects.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, INPUT_TIME, GRID_X, GRID_Y)
+    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, INPUT_TIME, GRID_X, GRID_Y)
     
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
               alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     if args.op_size > len(args.op_xs):
         operators_locations += [('random', 'random')]*(args.op_size - len(args.op_xs))
 
-    experiment(args.size, args.width, args.height, args.name, args.input_time, args.grid_x, args.grid_y, len(disasters_locations), disasters_locations, 
+    init(args.size, args.width, args.height, args.name, args.input_time, args.grid_x, args.grid_y, len(disasters_locations), disasters_locations, 
                    len(operators_locations), operators_locations, (args.r_min, args.r_max), args.r_perc, args.noise, args.d_move, args.alpha, args.cmd, 
                    args.cmd_t, args.const_repel, args.hum_r, args.comm_range, args.vis_range, args.w, args.bound, args.aging, args.gp, args.gp_step,
                    args.maze, args.walls,
