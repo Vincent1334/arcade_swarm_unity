@@ -34,10 +34,12 @@ for example if you want to run experiment 20 you simply run the following comman
 ```python
 python3 run.py 20 
 ```
+### Classes
+![alt text](https://github.com/mdivband/arcade_swarm/blob/main/class_diagram.png)
 
 ### [sim.py](sim.py)
 
-[objects.py](objects.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
+[sim.py](sim.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
 
 It allows for creating and running an extremely configurable simulation based on the algorithms explained in the paper.
 
@@ -179,7 +181,7 @@ which would initialise a simulation with a 'hard' maze and a swarm which uses Ga
 
 
 ### [run.py](run.py)
-[run.py](run.py) uses [init.py](init.py) to implement the experiments used throughout the paper. It contains 9 predefined experiments which include:
+[run.py](run.py) uses [init.py](init.py) to implement the experiments. It contains several predefined experiments, for example:
 
 different swarm sizes
 different reliability percentages
