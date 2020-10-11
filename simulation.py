@@ -235,7 +235,7 @@ class Human(Agent):
                 if len(X) == 0:
                     return None
 
-                print(len(X))
+                #print(len(X))
                 
                 Y = [self.internal_map[i,j] for i,j in X]
             
@@ -747,8 +747,8 @@ class SwarmSimulator(arcade.Window):
                     Drone(speed = 1, radius = 0.02, name = "drone "+str(i), sim = self, 
                           reliability = reliability, communication_noise = noise))     
         
-        for info in self.drone_info:  
-            print(info)
+        #for info in self.drone_info:  
+        #    print(info)
         
         # initialize human operatorss
         self.operators_size = operator_size
