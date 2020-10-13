@@ -115,10 +115,10 @@ class Agent(Object):
     def update(self):
         #sensing_noise = np.random.uniform(0, self.simulation.sensing_noise_strength, (self.simulation.GRID_Y, self.simulation.GRID_X))
 
-        s = random.uniform(0, self.simulation.sensing_noise_strength)
+        #s = random.uniform(0, self.simulation.sensing_noise_strength)
         
-        if random.random() < self.simulation.sensing_noise_prob:
-            self.internal_map *= (1-s)
+        #if random.random() < self.simulation.sensing_noise_prob:
+        #    self.internal_map *= (1-s)
         
         super().update()
     
@@ -579,11 +579,12 @@ class Drone(Agent):
 
         self.change_x, self.change_y = self.get_gradient_velocity()     
 
-        positioning_noise = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
+        positioning_noise_x = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
+        positioning_noise_y = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
 
         if random.random() < self.simulation.positioning_noise_prob:            
-            self.change_x = self.change_x + positioning_noise * self.simulation.ARENA_WIDTH/self.simulation.GRID_X
-            self.change_y = self.change_y + positioning_noise * self.simulation.ARENA_HEIGHT/self.simulation.GRID_Y      
+            self.change_x = self.change_x + positioning_noise_x * self.simulation.ARENA_WIDTH/self.simulation.GRID_X
+            self.change_y = self.change_y + positioning_noise_y * self.simulation.ARENA_HEIGHT/self.simulation.GRID_Y      
            
         super().update()
         
@@ -610,7 +611,13 @@ class Drone(Agent):
                         self.internal_map[k][j] = 0
                     else:
                         self.confidence_map[k][j] = self.reliability
-                        self.internal_map[k][j] = self.reliability * self.simulation.global_map[k][j]
+                        
+                        s = random.uniform(0, self.simulation.sensing_noise_strength)
+        
+                        if random.random() < self.simulation.sensing_noise_prob:
+                            self.internal_map[k][j] = self.reliability * self.simulation.global_map[k][j] * int(1-s)
+                        else:
+                            self.internal_map[k][j] = self.reliability * self.simulation.global_map[k][j]
                     
 '''
     Drone swarm Simulator
