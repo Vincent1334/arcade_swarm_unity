@@ -579,13 +579,14 @@ class Drone(Agent):
 
         self.change_x, self.change_y = self.get_gradient_velocity()     
 
+        '''
         positioning_noise_x = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
         positioning_noise_y = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
 
         if random.random() < self.simulation.positioning_noise_prob:            
             self.change_x = self.change_x + positioning_noise_x * self.simulation.ARENA_WIDTH/self.simulation.GRID_X
             self.change_y = self.change_y + positioning_noise_y * self.simulation.ARENA_HEIGHT/self.simulation.GRID_Y      
-           
+        '''   
         super().update()
         
         self.grid_pos_x = int(np.trunc((self.center_x * (self.simulation.GRID_X - 1) / self.simulation.ARENA_WIDTH)))
@@ -618,6 +619,23 @@ class Drone(Agent):
                             self.internal_map[k][j] = self.reliability * self.simulation.global_map[k][j] * int(1-s)
                         else:
                             self.internal_map[k][j] = self.reliability * self.simulation.global_map[k][j]
+                        
+                        positioning_noise_x = int(random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength))
+                        positioning_noise_y = int(random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength))                        
+                        k_noise = positioning_noise_x + k #*= self.simulation.ARENA_WIDTH/self.simulation.GRID_X
+                        if (k_noise < 0):
+                            k_noise = 0
+                        elif (k_noise >= self.simulation.GRID_X):
+                            k_noise = self.simulation.GRID_X - 1
+                        
+                        j_noise = positioning_noise_y  + j #*= self.simulation.ARENA_HEIGHT/self.simulation.GRID_Y
+                        if (j_noise < 0):
+                            j_noise = 0
+                        elif (j_noise >= self.simulation.GRID_Y):
+                            j_noise = self.simulation.GRID_Y - 1                            
+                        
+                        if random.random() < self.simulation.positioning_noise_prob:            
+                            self.internal_map[k_noise][j_noise] = self.simulation.global_map[k][j]                       
                     
 '''
     Drone swarm Simulator
@@ -836,7 +854,7 @@ class SwarmSimulator(arcade.Window):
         if directory == None:      
             log = open("log_setup.txt", "w")
         else:
-            log = open(directory + "\\log_setup.txt", "w")        
+            log = open(directory + "/log_setup.txt", "w")        
         self.directory = directory
         
         log.write('GENERAL INFO:' + '\n')
@@ -1018,7 +1036,7 @@ class SwarmSimulator(arcade.Window):
              '''
              import pandas as pd
              distances = df = pd.DataFrame([(v) for k, v in self.drone_distances.items()])
-             distances.to_csv(self.directory + '\\distances.csv', sep=',')
+             distances.to_csv(self.directory + '/distances.csv', sep=',')
 
              '''
              import csv
@@ -1030,8 +1048,8 @@ class SwarmSimulator(arcade.Window):
              
         self.timer += 1
         
-        if self.timer % 100 == 0:             
-             print(self.timer)
+        #if self.timer % 100 == 0:             
+        #     print(self.timer)
              
         if self.timer == 100:
             print('***', time.time() - self.begining, '***')
@@ -1130,7 +1148,7 @@ class SwarmSimulator(arcade.Window):
             self.operator_confidence_maps.append(self.operator_list[0].confidence_map.copy())
 
             #np.savetxt(self.directory + '\\t_{0}_random_droneconfidence_map.csv'.format(self.timer), self.random_drone.confidence_map, delimiter=",")
-        print(self.timer)
+        #print(self.timer)
         #np.savetxt(self.directory + '\\belief\\t_{0}_random_drone_internal_map.csv'.format(self.timer), self.random_drone.internal_map, delimiter=",")
         #np.savetxt(self.directory + '\\confidence\\t_{0}_random_droneconfidence_map.csv'.format(self.timer), self.random_drone.confidence_map, delimiter=",")
                   

@@ -20,19 +20,16 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
               communication_range, vision_range, velocity_weight_coef, boundary_repulsion, aging_factor, gp, gp_step, maze, through_walls,
               communication_noise_strength, communication_noise_prob, positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)  
 
-    if (not os.path.isdir(name_of_experiment)):
-        os.mkdir(name_of_experiment)
-    if (not os.path.isdir(name_of_experiment + '\\data')):
-        os.mkdir(name_of_experiment + '\\data')
+    #if (not os.path.isdir(name_of_experiment)):
+    #    os.mkdir(name_of_experiment)
+    #if (not os.path.isdir(name_of_experiment + '/data')):
+    #    os.mkdir(name_of_experiment + '/data')
          
-    sim.directory = str(name_of_experiment + '\\data\\results'+ str(time.time()))
-    
-    while os.path.isdir(sim.directory):
-        sim.directory = str(name_of_experiment + '\\data\\results' + str(time.time()))
+    sim.directory = str(name_of_experiment) + '/'+ str(time.time())
 
     directory = sim.directory
         
-    os.mkdir(directory)
+    os.makedirs(directory)
     sim.log_setup(directory)      
     arcade.run()                 
     

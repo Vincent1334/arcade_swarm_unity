@@ -214,7 +214,7 @@ if __name__ == "__main__":
         elif exp == 21:
             cmds = communication_noise(communication_noise_prob = [0.99875, .9988, .9989])#threshold = 0.997-0.999
         elif exp == 22:
-            cmds = positioning_noise(positioning_noise_strength = [1, 2, 5], positioning_noise_prob = [0.8, 0.9, 0.99])
+            cmds = positioning_noise(positioning_noise_strength = [3], positioning_noise_prob = [1])
         elif exp == 23:
             cmds = sensing_noise(sensing_noise_strength = [0.5, 0.75, 1], sensing_noise_prob = [0.8, 0.9, 0.99])
             
