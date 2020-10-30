@@ -1,4 +1,4 @@
-# Plotting results with Gnuplot
+## Plotting results with Gnuplot
 
 ### [combine_data.py](combine_data.py)
 read belief errors from csv files and put them in one *_combined.csv file 
