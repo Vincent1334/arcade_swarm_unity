@@ -37,9 +37,9 @@ python3 run.py 20
 ### Classes
 ![alt text](https://github.com/mdivband/arcade_swarm/blob/main/class_diagram.png)
 
-### [sim.py](sim.py)
+### [simulation.py](sim.py)
 
-[sim.py](sim.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
+[simulation.py](simulation.py) simply stores the different classes (Obstacle, Disaster, Drone, Human, SwarmSimulation). These define all the functionality used in the simulation.  
 
 It allows for creating and running an extremely configurable simulation based on the algorithms explained in the paper.
 
