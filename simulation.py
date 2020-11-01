@@ -110,6 +110,9 @@ class Agent(Object):
         self.grid_pos_x = math.trunc((self.center_x * (self.simulation.GRID_X - 1) / self.simulation.ARENA_WIDTH))
         self.grid_pos_y = math.trunc(((1 - self.center_y / self.simulation.ARENA_HEIGHT ) * (self.simulation.GRID_Y - 1)))
         
+        self.message_count_succ = 0
+        self.message_count_fail = 0
+        
         self.message = ""
         
     def update(self):
@@ -145,9 +148,12 @@ class Agent(Object):
 
         else:           
         '''
-        if random.random() >= self.simulation.communication_noise_prob:
+        if random.random() > self.simulation.communication_noise_prob:
             #self.communication_noise = random.uniform(0, self.simulation.communication_noise_strength)
             self.exchange_data(agent, how)
+            self.message_count_succ += 1
+        else: 
+            self.message_count_fail += 1
 
     def exchange_data(self, agent, how):
         '''if (random.randrange(0, 100) < 50):
@@ -166,6 +172,7 @@ class Agent(Object):
                         agent.internal_map[i][j] =  self.reliability * self.internal_map[i][j] + coeff * self.communication_noise                        
                         agent.confidence_map[i][j] = self.confidence_map[i][j] + coeff * self.communication_noise
         elif how == 'average':            
+            #self.message_count_succ += 1
             agent.internal_map = self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise                                        
             agent.confidence_map = self.confidence_map = (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise
 
@@ -377,7 +384,7 @@ class Drone(Agent):
             for i in range(self.grid_pos_y - r, self.grid_pos_y + r + 1):
                 for j in range(self.grid_pos_x - r, self.grid_pos_x + r + 1):
                     if(i >= 0 and i < self.simulation.GRID_Y and j >= 0 and j < self.simulation.GRID_X):
-                        pixel = self.confidence_map[i][j]
+                        pixel = self.confidence_map[i][j] * (1 - self.internal_map[i][j])
                     else:
                         pixel = 1*self.simulation.BOUNDARY_REPULSION
                     
@@ -594,6 +601,7 @@ class Drone(Agent):
         
     def update_confidence_and_belief(self):		 
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
+        #self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
         
         for j in range(self.grid_pos_x - int(self.simulation.BOUDARY_DIAMETER/2), self.grid_pos_x + int(self.simulation.BOUDARY_DIAMETER/2) + 1):    
             for k in range(self.grid_pos_y - int(self.simulation.BOUDARY_DIAMETER/2), self.grid_pos_y + int(self.simulation.BOUDARY_DIAMETER/2) + 1):
@@ -611,7 +619,7 @@ class Drone(Agent):
                         self.confidence_map[k][j] = self.reliability * self.simulation.BOUNDARY_REPULSION * 5
                         self.internal_map[k][j] = 0
                     else:
-                        self.confidence_map[k][j] = self.reliability
+                        #self.confidence_map[k][j] = self.reliability
                         
                         s = random.uniform(0, self.simulation.sensing_noise_strength)
         
@@ -635,14 +643,19 @@ class Drone(Agent):
                             j_noise = self.simulation.GRID_Y - 1                            
                         
                         if random.random() < self.simulation.positioning_noise_prob:            
-                            self.internal_map[k_noise][j_noise] = self.simulation.global_map[k][j]                       
+                            self.internal_map[k_noise][j_noise] = self.simulation.global_map[k][j]
+                            self.confidence_map[k_noise][j_noise] = self.reliability
+                        else:
+                            self.internal_map[k][j] = self.simulation.global_map[k][j]
+                            self.confidence_map[k][j] = self.reliability                            
+                                                   
                     
 '''
     Drone swarm Simulator
 '''
 class SwarmSimulator(arcade.Window):
     
-    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, INPUT_TIME, GRID_X, GRID_Y): 
+    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y): 
         
         self.ARENA_WIDTH = ARENA_WIDTH
         self.ARENA_HEIGHT = ARENA_HEIGHT   
@@ -650,6 +663,7 @@ class SwarmSimulator(arcade.Window):
         self.SWARM_SIZE = SWARM_SIZE        
         
         self.INPUT_TIME = INPUT_TIME
+        self.run_time = RUN_TIME 
         self.GRANULARITY = 10
         self.GRID_X = GRID_X #int(ARENA_WIDTH / GRANULARITY)
         self.GRID_Y = GRID_Y #nt(ARENA_HEIGHT / GRANULARITY)
@@ -1021,7 +1035,7 @@ class SwarmSimulator(arcade.Window):
         
                   
     def update(self, interval):
-        if self.timer >= 1000:
+        if self.timer >= self.run_time:
              arcade.close_window()
 
              '''
@@ -1182,6 +1196,18 @@ class SwarmSimulator(arcade.Window):
                  print("displaying 300")
                  #self.display_selected_drone_info(self.random_drone)                             
              '''
+        message_sum_succ = 0
+        message_sum_fail = 0
+        if self.timer > self.run_time - 1:
+            for drone in self.drone_list :
+                message_sum_succ +=drone.message_count_succ
+                message_sum_fail +=drone.message_count_fail
+                print ("succ for drone ", drone.message_count_succ)
+                print ("fail for drone ", drone.message_count_fail)
+                
+            print ("SUCC: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_succ / len(self.drone_list)))
+            print ("FAILED: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_fail / len(self.drone_list)))
+
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
             for i in range(self.GRID_Y):

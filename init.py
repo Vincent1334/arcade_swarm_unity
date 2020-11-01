@@ -6,14 +6,14 @@ import argparse
 
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
 # Could be used with different swarm sizes, reliability ranges and percentages, and communication noise
-def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = time.time(), INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
+def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = time.time(), run_time = 1000, INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
                disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random', reliability = (100, 101), unreliability_percentage = 0, 
                moving_disaster = False, communication_noise = 0, alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, 
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,
                gp = False, gp_step = 50, maze = None, through_walls = True,
                communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0, positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0):
     
-    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, INPUT_TIME, GRID_X, GRID_Y)
+    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y)
     
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
               alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     parser.add_argument('-gp_step', type = int, default = 50) #gaussian processes step
     parser.add_argument('-maze', type = str, default = None) #maze
     parser.add_argument('-walls', type = bool, default = False) #communication through walls
+    parser.add_argument('-run_time', type = int, default = 1000) #communication through walls
 
 
     # New experiments
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     if args.op_size > len(args.op_xs):
         operators_locations += [('random', 'random')]*(args.op_size - len(args.op_xs))
 
-    init(args.size, args.width, args.height, args.name, args.input_time, args.grid_x, args.grid_y, len(disasters_locations), disasters_locations, 
+    init(args.size, args.width, args.height, args.name, args.run_time, args.input_time, args.grid_x, args.grid_y, len(disasters_locations), disasters_locations, 
                    len(operators_locations), operators_locations, (args.r_min, args.r_max), args.r_perc, args.noise, args.d_move, args.alpha, args.cmd, 
                    args.cmd_t, args.const_repel, args.hum_r, args.comm_range, args.vis_range, args.w, args.bound, args.aging, args.gp, args.gp_step,
                    args.maze, args.walls,

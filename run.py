@@ -34,6 +34,7 @@ import re
 -gp              type = bool    default = False        gaussian processes
 -gp_step         type = int     default = 50           gaussian processes_step
 -maze            type = str     default = True         maze type
+-run_time        type = int     default = 1000         simulation steps
 '''
   
 def compare_swarm_sizes(swarm_sizes = [1, 5, 10, 15, 20, 25, 50]):    
@@ -96,8 +97,8 @@ def constant_center_repel(ranges = [50, 100, 150]):
 
 def moving_disaster():    
     cmds = []             
-    cmds.append('-name "moving_disaster" -d_x 500 -d_y 500 -d_move "True"')
-    cmds.append('-name "moving_disaster" -d_x 100 -d_y 500 -d_move "True"')
+    #cmds.append('-name "moving_disaster" -d_x 500 -d_y 500 -d_move "True"')
+    #cmds.append('-name "moving_disaster" -d_x 100 -d_y 500 -d_move "True"')
     cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True"')
     return cmds
 
@@ -134,7 +135,7 @@ def communication_noise(communication_noise_prob = [0.1, 0.25, 0.5, 0.75, 1]):
     for p in communication_noise_prob:
         #cmds.append('-name "communication_noise experiment_{0}" -d_x 500 -d_y 500 -communication_noise_prob {0}'.format(p))
         #cmds.append('-name "communication_noise experiment_{0}" -d_x 100 -d_y 500 -communication_noise_prob {0}'.format(p))
-        cmds.append('-name "communication_noise experiment_{0}" -d_x 300 -d_y 100 -communication_noise_prob {0}'.format(p))
+        cmds.append('-name "communication_noise experiment_{0}" -comm_range 30 -run_time 2000 -size 30 -grid_x 90 -grid_y 90 -d_x 600 -d_y 800 -communication_noise_prob {0} -height 900 -width 900'.format(p))
     return cmds
 
 def positioning_noise(positioning_noise_strength = [1, 2, 3], positioning_noise_prob = [0.1, 0.25, 0.5, 0.75, 1]):
@@ -210,11 +211,11 @@ if __name__ == "__main__":
         elif exp == 19:
             cmds = ['-name "distances"']
         elif exp == 20:
-            cmds = ['-d_size 4 -size 3 -grid_x 100 -grid_y 100 -vis_range 1']
+            cmds = ['-d_size 1 -size 15 -grid_x 100 -grid_y 100 ']
         elif exp == 21:
-            cmds = communication_noise(communication_noise_prob = [0.99875, .9988, .9989])#threshold = 0.997-0.999
+            cmds = communication_noise(communication_noise_prob =[0])#= [0.9995])#threshold = 0.997-0.999
         elif exp == 22:
-            cmds = positioning_noise(positioning_noise_strength = [3], positioning_noise_prob = [1])
+            cmds = positioning_noise(positioning_noise_strength = [2], positioning_noise_prob = [.1, .5])
         elif exp == 23:
             cmds = sensing_noise(sensing_noise_strength = [0.5, 0.75, 1], sensing_noise_prob = [0.8, 0.9, 0.99])
             
