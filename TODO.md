@@ -1,7 +1,7 @@
 - [ ] tune communication rate with significance of differences with neighbors 
 - [ ] average with neighbors to weighted sum: rely on neighbors when differences are high
 - [ ] explain why swarm is behaving in a certain way 
-- [ ] Attract B * (1-C) instead of 1-C
+- [x] Attract B * (1-C) instead of 1-C
 - [ ] Redefine Belief error calculation 
  + image processing diff |screen – large_resolution(belief_map)|
 - [ ] Add human interface
