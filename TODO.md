@@ -14,3 +14,4 @@
  + Voting mechanism?
 - [ ] 1024 robots:
  + Goal: performance decreases but works 
+- [ ] move to ArGos
