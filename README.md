@@ -6,10 +6,7 @@ We recommend installing the project's dependencies on a separate virtual environ
 After activating your virtual environment you can install the required dependencies by following instruction bellow:
 
 - [x] First clone the project to your desired directory.
-- [x] You can install all the project's dependencies by changing the directory to the repository and run the command below:
-    ```python
-    pip install -r requirements.txt 
-    ```
+
 To run the deep learning related experiments (experiment 22 & 23) You have to install the customized gym environment:
 
 - [x] Simply go to gym-swarm directory inside the cloned repository
