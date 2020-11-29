@@ -5,6 +5,8 @@ import math
 import time
 from matplotlib import pyplot as plt
 import collections
+from network import gameNetwork
+
 
 '''
 Class Object (abstract class)
@@ -679,6 +681,7 @@ class SwarmSimulator(arcade.Window):
                 
         self.timer = 0
         self.begining = time.time()   
+        self.network = gameNetwork()
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -1061,6 +1064,8 @@ class SwarmSimulator(arcade.Window):
              '''
              
         self.timer += 1
+
+        self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
         
         #if self.timer % 100 == 0:             
         #     print(self.timer)
@@ -1410,3 +1415,12 @@ class SwarmSimulator(arcade.Window):
 
         if self.maze != None:
             self.obstacle_list.draw()
+
+    def send_data(self, operator):
+        """
+        Send simulation information to web API
+        :return: Json object
+        """
+        data = {'id': self.network.id,'timestep': self.timer, 'confidence_cords': operator.confidence_map, 'belief_cords': operator.internal_map}
+        reply = self.net.send(data)
+        return reply
