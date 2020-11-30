@@ -10,26 +10,33 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random', reliability = (100, 101), unreliability_percentage = 0, 
                moving_disaster = False, communication_noise = 0, alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, 
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,
-               gp = False, gp_step = 50, maze = None, through_walls = True,
-               communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0, positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0):
+               gp = False, gp_step = 50, maze = None, through_walls = True, communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0,
+               positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0, online_exp = None):
     
-    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y)
+    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
     
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
               alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
               communication_range, vision_range, velocity_weight_coef, boundary_repulsion, aging_factor, gp, gp_step, maze, through_walls,
               communication_noise_strength, communication_noise_prob, positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)  
 
-    #if (not os.path.isdir(name_of_experiment)):
-    #    os.mkdir(name_of_experiment)
-    #if (not os.path.isdir(name_of_experiment + '/data')):
-    #    os.mkdir(name_of_experiment + '/data')
-         
-    sim.directory = str(name_of_experiment) + '/'+ str(time.time())
+    if not os.path.isdir('outputs'):
+        os.mkdir('outputs')
+    if (not os.path.isdir('outputs/' + name_of_experiment)):
+        os.mkdir('outputs/' + name_of_experiment)
+    if (not os.path.isdir('outputs/' + name_of_experiment + '/data')):
+        os.mkdir('outputs/' + name_of_experiment + '/data')
+    if (not os.path.isdir('outputs/' + name_of_experiment + '/data' + '/results')):
+        os.mkdir('outputs/' + name_of_experiment + '/data' + '/results')
+
+    sim.directory = str('outputs/' + name_of_experiment + '/data/results/'+ str(time.time()))
+    
+    while os.path.isdir(sim.directory):
+        sim.directory = str('outputs/' + name_of_experiment + '/data/results/' + str(time.time()))
 
     directory = sim.directory
         
-    os.makedirs(directory)
+    os.mkdir(directory)
     sim.log_setup(directory)      
     arcade.run()                 
     
@@ -45,14 +52,21 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
     #sim.plot_boxplots(sim.operator_confidence, 'Operator confidence over time')
     #sim.plot_boxplots(sim.operator_internal_error, 'Operator belief map error over time')
     
-
     sim.save_positions(sim, directory)
     sim.save_boxplots(sim.swarm_confidence, 'confidence_time', directory)
     sim.save_boxplots(sim.swarm_internal_error, 'belief_error', directory)
 
     sim.save_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
     sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
+    sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
     
+    # Saving images of plots
+    os.makedirs(directory + '/map_images')
+    sim.save_image_plot_heatmaps(sim.operator_confidence_maps, 'operator confidence', directory)
+    sim.save_image_plot_heatmaps(sim.operator_belief_maps, 'operator belief', directory)
+
+    sim.save_image_plot_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
+    sim.save_image_plot_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
     print('END')
 
 def merge(list1, list2):       
@@ -109,18 +123,14 @@ if __name__ == '__main__':
     parser.add_argument('-maze', type = str, default = None) #maze
     parser.add_argument('-walls', type = bool, default = False) #communication through walls
     parser.add_argument('-run_time', type = int, default = 1000) #communication through walls
-
-
-    # New experiments
     parser.add_argument('-communication_noise_strength', type = float, default = 0) 
     parser.add_argument('-communication_noise_prob', type = float, default = 0) 
-
     parser.add_argument('-positioning_noise_strength', type = float, default = 0) 
     parser.add_argument('-positioning_noise_prob', type = float, default = 0) 
-    
     parser.add_argument('-sensing_noise_strength', type = float, default = 0) 
     parser.add_argument('-sensing_noise_prob', type = float, default = 0) 
-    
+    parser.add_argument('-online_exp', type = str, default = None) # Online experiment modes
+
     args = parser.parse_args()
     
     disasters_locations = merge(args.d_xs, args.d_ys)

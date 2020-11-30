@@ -657,7 +657,7 @@ class Drone(Agent):
 '''
 class SwarmSimulator(arcade.Window):
     
-    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y): 
+    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp): 
         
         self.ARENA_WIDTH = ARENA_WIDTH
         self.ARENA_HEIGHT = ARENA_HEIGHT   
@@ -681,7 +681,11 @@ class SwarmSimulator(arcade.Window):
                 
         self.timer = 0
         self.begining = time.time()   
-        self.network = gameNetwork()
+        
+        self.online_exp = online_exp
+        
+        if online_exp is not None:
+            self.network = gameNetwork()
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -1065,7 +1069,8 @@ class SwarmSimulator(arcade.Window):
              
         self.timer += 1
 
-        self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
+        if self.online_exp is not None:
+            self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
         
         #if self.timer % 100 == 0:             
         #     print(self.timer)
@@ -1325,6 +1330,36 @@ class SwarmSimulator(arcade.Window):
             ax.append( fig.add_subplot(2, 5, i + 1) )            
             plt.imshow(rescaled_map, cmap='coolwarm', interpolation='nearest')            
         plt.show()
+    
+    def save_image_plot_heatmaps(self, maps, title, directory='temp'):
+        ax = []
+        fig = plt.figure(figsize=(20,20))
+        fig.suptitle(title)        
+        
+        for i in range(min(len(maps), 10)):            
+            data_map = np.asarray(maps[i])
+
+            data_map = np.clip(data_map, 0, 1)
+            
+            rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
+            ax.append( fig.add_subplot(2, 5, i + 1) )            
+            plt.imshow(rescaled_map, cmap='coolwarm', interpolation='nearest')            
+        plt.savefig(directory + '/map_images/' + title + '.png')
+        plt.close()
+
+    def save_image_plot_boxplots(self, maps, title, directory):        
+        #np.savetxt('maps_{0}.csv'.format(time.time()), maps, delimiter=",")
+        #maps.to_csv('maps_{0}.csv'.format(time.time()))
+        fig, ax = plt.subplots()
+        #plt.yticks(np.arange(0, 800, 200))
+        ax.set_xlabel('Simulation steps')
+        ax.set_xticks(np.arange(0, 1001, 100))
+        #ax.set_xticklabels(['0', '300', '600', '900', '1200'])        
+        ax.set_yticks(np.arange(0, 1601, 400))
+        #ax.set_yticklabels(['0', '400', '800', '1200', '1600'])        
+        ax.boxplot(maps)        
+        plt.savefig(directory + '/map_images/' + title + '.png')
+        plt.close()
     
     def plot_boxplots(self, maps, title):        
         #np.savetxt('maps_{0}.csv'.format(time.time()), maps, delimiter=",")
