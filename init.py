@@ -1,19 +1,23 @@
 import time
+from datetime import datetime
 import os
 import arcade
 import simulation
 import argparse
 
+
+EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
 # Could be used with different swarm sizes, reliability ranges and percentages, and communication noise
-def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = time.time(), run_time = 1000, INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
+def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = EXP_D_T, run_time = 1000, INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
                disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random', reliability = (100, 101), unreliability_percentage = 0, 
                moving_disaster = False, communication_noise = 0, alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, 
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,
                gp = False, gp_step = 50, maze = None, through_walls = True, communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0,
                positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0, online_exp = None):
     
-    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
+    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
     
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
               alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
@@ -24,19 +28,15 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         os.mkdir('outputs')
     if (not os.path.isdir('outputs/' + name_of_experiment)):
         os.mkdir('outputs/' + name_of_experiment)
-    if (not os.path.isdir('outputs/' + name_of_experiment + '/data')):
-        os.mkdir('outputs/' + name_of_experiment + '/data')
-    if (not os.path.isdir('outputs/' + name_of_experiment + '/data' + '/results')):
-        os.mkdir('outputs/' + name_of_experiment + '/data' + '/results')
-
-    sim.directory = str('outputs/' + name_of_experiment + '/data/results/'+ str(time.time()))
-    
-    while os.path.isdir(sim.directory):
-        sim.directory = str('outputs/' + name_of_experiment + '/data/results/' + str(time.time()))
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/preformance_test')):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
+        
+    sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
 
     directory = sim.directory
         
-    os.mkdir(directory)
     sim.log_setup(directory)      
     arcade.run()                 
     
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-size', type = int, default = 15) #swarm_size
-    parser.add_argument('-name', type = str, default = str(time.time())) #experiment_name
+    parser.add_argument('-name', type = str, default = "General") #experiment_name
     parser.add_argument('-d_size', type=int, default = 1)
     parser.add_argument('-d_xs', nargs='+', type=int, default = [500])
     parser.add_argument('-d_ys', nargs='+', type=int, default = [500])

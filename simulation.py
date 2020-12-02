@@ -5,7 +5,11 @@ import math
 import time
 from matplotlib import pyplot as plt
 import collections
+import os
+import timeit
+import pyglet
 from network import gameNetwork
+from fps_test_modules import FPSCounter
 
 
 '''
@@ -582,6 +586,7 @@ class Drone(Agent):
         self.change_x = t*self.change_x + (1-t)*x
         self.change_y = t*self.change_y + (1-t)*y
         '''
+        
         if self.simulation.GP == True:
             if self.simulation.timer % self.simulation.gp_step == 0:
                 self.predict_belief_map2()
@@ -650,8 +655,7 @@ class Drone(Agent):
                         else:
                             self.internal_map[k][j] = self.simulation.global_map[k][j]
                             self.confidence_map[k][j] = self.reliability                            
-                                                   
-                    
+                                                                    
 '''
     Drone swarm Simulator
 '''
@@ -659,6 +663,7 @@ class SwarmSimulator(arcade.Window):
     
     def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp): 
         
+        self.ARENA_TITLE = ARENA_TITLE
         self.ARENA_WIDTH = ARENA_WIDTH
         self.ARENA_HEIGHT = ARENA_HEIGHT   
         self.ARENA_TITLE = ARENA_TITLE        
@@ -686,6 +691,19 @@ class SwarmSimulator(arcade.Window):
         
         if online_exp is not None:
             self.network = gameNetwork()
+            
+        # FPS TEST parameters
+        self.processing_time = 0
+        self.draw_time = 0
+        self.program_start_time = timeit.default_timer()
+        self.fps_list = []
+        self.processing_time_list = []
+        self.drawing_time_list = []
+        self.last_fps_reading = 0
+        self.fps = FPSCounter()
+        
+        # Open file to save timings
+        self.results_file = None  
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -701,7 +719,7 @@ class SwarmSimulator(arcade.Window):
         #Communication noise
         self.communication_noise_strength = communication_noise_strength
         self.communication_noise_prob = communication_noise_prob
-        print(self.communication_noise_strength, self.communication_noise_prob)
+        # print(self.communication_noise_strength, self.communication_noise_prob)
 
         #Positioning noise
         self.positioning_noise_strength = positioning_noise_strength
@@ -719,13 +737,9 @@ class SwarmSimulator(arcade.Window):
         
         self.LOSING_CONFIDENCE_RATE = aging_factor
         
-        self.drone_list = arcade.SpriteList()  
-        self.operator_list = arcade.SpriteList()
-        self.obstacle_list = arcade.SpriteList() 
-        
-        self.background = arcade.Sprite("images/bg.png")
-        self.background.center_x = self.ARENA_WIDTH / 2
-        self.background.center_y = self.ARENA_HEIGHT / 2
+        self.drone_list = arcade.SpriteList(use_spatial_hash=False)  
+        self.operator_list = arcade.SpriteList(use_spatial_hash=False)
+        self.obstacle_list = arcade.SpriteList(use_spatial_hash=False) 
         
         self.influenced_drone = None
         
@@ -931,7 +945,10 @@ class SwarmSimulator(arcade.Window):
                 log.write('  -- ' + 'TYPE: ' + obstacle.type + ', POSITION: (' + str(obstacle.center_x) + ', ' + str(obstacle.center_y) + '), ' +
                           'VELOCITY: (' + str(obstacle.change_x) + ', ' + str(obstacle.change_y) + ')'+ '\n')
         
-        log.close()        
+        log.close()
+
+        # Open file to save timings
+        self.results_file = open(self.directory + '/performance_test/' + 'stress_test_results.csv', "w")
  
     def get_current_drones_positions(self):        
         positions = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
@@ -1044,7 +1061,7 @@ class SwarmSimulator(arcade.Window):
     def update(self, interval):
         if self.timer >= self.run_time:
              arcade.close_window()
-
+             
              '''
              local_f = []
              global_f = []
@@ -1066,7 +1083,10 @@ class SwarmSimulator(arcade.Window):
                  w.writerow(self.drone_distances.keys())
                  w.writerow(self.drone_distances.values())
              '''
-             
+
+        # Start update timer
+        start_time = timeit.default_timer()
+        
         self.timer += 1
 
         if self.online_exp is not None:
@@ -1102,10 +1122,10 @@ class SwarmSimulator(arcade.Window):
             self.save_one_heatmap(current_positions, 'swarm_positions_' + str(self.timer), self.directory)
         '''
         self.drones_positions += current_positions
-            
+
         for drone in self.drone_list :
              drone.update_confidence_and_belief()  
-                
+        
         if self.constant_repulsion == True:                        
             for operator in self.operator_list:                
                 for drone in self.drone_list:                        
@@ -1114,7 +1134,7 @@ class SwarmSimulator(arcade.Window):
                     if(math.sqrt(dx * dx + dy * dy) <= self.operator_vision_radius):
                         self.send_gradual_indirect_command("small center repel", drone, self.alpha)
         
-        #exchange messages in certain distance between drones
+        # exchange messages in certain distance between drones
         for i in range(len(self.drone_list) - 1):             
              drone_1 = self.drone_list[i]
             
@@ -1129,8 +1149,8 @@ class SwarmSimulator(arcade.Window):
                          self.collision_counter += 1
                          
                      drone_1.communicate(drone_2)
-
-        #exchange messages in certain distance between drones and operator
+        
+        # exchange messages in certain distance between drones and operator
         for operator in self.operator_list:                 
              for drone in self.drone_list:
                  
@@ -1140,10 +1160,9 @@ class SwarmSimulator(arcade.Window):
 
                  if (distance <= self.operator_vision_radius):
                      operator.communicate(drone)
-
         
         self.operator_list.update()
-                             
+        
         if self.timer % 5 == 0:                 
             self.swarm_confidence.append(self.get_swarm_confidence())
             
@@ -1175,7 +1194,7 @@ class SwarmSimulator(arcade.Window):
         #print(self.timer)
         #np.savetxt(self.directory + '\\belief\\t_{0}_random_drone_internal_map.csv'.format(self.timer), self.random_drone.internal_map, delimiter=",")
         #np.savetxt(self.directory + '\\confidence\\t_{0}_random_droneconfidence_map.csv'.format(self.timer), self.random_drone.confidence_map, delimiter=",")
-                  
+            
         if (self.normal_command != None):             
              period = self.command_period
              '''
@@ -1186,14 +1205,14 @@ class SwarmSimulator(arcade.Window):
              if (self.timer >= self.INPUT_TIME and self.timer <= self.INPUT_TIME + period):                 
                  #print("************ time for indirect command ***************")	                 
                  #self.display_selected_drone_info(self.random_drone)
-                 
+                
                  for operator in self.operator_list: 
                      for drone in self.drone_list:                        
                          dx = (drone.center_x - operator.center_x)
                          dy = (drone.center_y - operator.center_y)
                          if(math.sqrt(dx * dx + dy * dy) <= self.operator_vision_radius):
                              self.send_gradual_indirect_command(self.normal_command, drone, self.alpha)
-                                        
+                                   
                  #self.display_selected_drone_info(self.random_drone) 
              '''
              if (self.timer == self.INPUT_TIME + period + 1):
@@ -1212,12 +1231,38 @@ class SwarmSimulator(arcade.Window):
             for drone in self.drone_list :
                 message_sum_succ +=drone.message_count_succ
                 message_sum_fail +=drone.message_count_fail
-                print ("succ for drone ", drone.message_count_succ)
-                print ("fail for drone ", drone.message_count_fail)
+                # print ("succ for drone ", drone.message_count_succ)
+                # print ("fail for drone ", drone.message_count_fail)
                 
-            print ("SUCC: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_succ / len(self.drone_list)))
-            print ("FAILED: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_fail / len(self.drone_list)))
+            # print ("SUCC: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_succ / len(self.drone_list)))
+            # print ("FAILED: drone message noise: ", str(1 - self.drone_list[0].simulation.communication_noise_prob) +", result: " +str(message_sum_fail / len(self.drone_list)))
+        
+        # Save the time it took to do this.
+        self.processing_time = timeit.default_timer() - start_time
 
+        # Total time program has been running
+        total_program_time = int(timeit.default_timer() - self.program_start_time)
+
+        # Print out stats, or add more sprites
+        if total_program_time > self.last_fps_reading:
+            self.last_fps_reading = total_program_time
+
+            if total_program_time > 5:
+
+                if total_program_time % 2 == 1:
+
+                    # Take timings
+                    output = f"{total_program_time}, {self.fps.get_fps():.1f}, " \
+                             f"{self.processing_time:.4f}, {self.draw_time:.4f}\n"
+
+                    self.results_file.write(output)
+                    
+                    print(output, end="")
+
+                    self.fps_list.append(round(self.fps.get_fps(), 1))
+                    self.processing_time_list.append(self.processing_time)
+                    self.drawing_time_list.append(self.draw_time)
+                    
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
             for i in range(self.GRID_Y):
@@ -1263,7 +1308,7 @@ class SwarmSimulator(arcade.Window):
                         self.operator_list[0].confidence_map[i][j] = (-val -2)/alpha
                     else:
                         self.operator_list[0].confidence_map[i][j] = val/alpha
-            
+    
         else:
             print('wrong command')
         
@@ -1443,6 +1488,9 @@ class SwarmSimulator(arcade.Window):
             self.display_selected_drone_info(selected_drone)      
             
     def on_draw(self):
+        # Start timing how long this takes
+        draw_start_time = timeit.default_timer()
+        
         arcade.start_render()
         self.operator_list.draw()
         self.disaster_list.draw()
@@ -1451,6 +1499,9 @@ class SwarmSimulator(arcade.Window):
         if self.maze != None:
             self.obstacle_list.draw()
 
+        self.draw_time = timeit.default_timer() - draw_start_time
+        self.fps.tick()
+        
     def send_data(self, operator):
         """
         Send simulation information to web API

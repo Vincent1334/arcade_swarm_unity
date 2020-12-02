@@ -155,6 +155,11 @@ def sensing_noise(sensing_noise_strength = [0.1, 0.25, 0.5, 0.75, 1], sensing_no
             #cmds.append('-name "sensing_noise experiment_{0}_{1}" -d_x 100 -d_y 500 -sensing_noise_strength {0} -sensing_noise_prob {1}'.format(s,p))
             #cmds.append('-name "sensing_noise experiment_{0}_{1}" -d_x 300 -d_y 100 -sensing_noise_strength {0} -sensing_noise_prob {1}'.format(s,p))
     return cmds
+
+def bottleneck_tests(swarm_size = 150):
+    cmds = []          
+    cmds.append('-name bottleneck_test_experiment_S{}'.format(swarm_size) + ' -size ' +str(swarm_size))
+    return cmds
     
 def trim_cmd(cmd):    
     PATTERN = re.compile(r'''((?:[^ "]|"[^"]*")+)''')
@@ -218,6 +223,9 @@ if __name__ == "__main__":
             cmds = positioning_noise(positioning_noise_strength = [2], positioning_noise_prob = [.1, .5])
         elif exp == 23:
             cmds = sensing_noise(sensing_noise_strength = [0.5, 0.75, 1], sensing_noise_prob = [0.8, 0.9, 0.99])
+        elif exp == 24:
+            cmds = bottleneck_tests()
+        
             
         for cmd in cmds:            
             proc = subprocess.Popen([sys.executable, 'init.py'] + trim_cmd(cmd))
