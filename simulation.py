@@ -1314,7 +1314,7 @@ class SwarmSimulator(arcade.Window):
                     if r <= 5:     
                         r = 1 - r/(self.GRID_X/2)
                         self.operator_list[0].confidence_map[i][j] = alpha*r
-        elif where == 'disaster attract':
+        elif where == 'disaster_attract':
             # y_max, x_max = np.unravel_index(self.operator_list[0].internal_map.argmax(), self.operator_list[0].internal_map.shape)
 
             #if self.operator_list[0].internal_map[y_max][x_max] > 0:

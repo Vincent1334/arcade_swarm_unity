@@ -40,14 +40,14 @@ import re
 def compare_swarm_sizes(swarm_sizes = [1, 5, 10, 15, 20, 25, 50]):    
     cmds = []   
     for size in swarm_sizes:             
-        cmds.append('-name "first experiment_{0}" -d_x 500 -d_y 500'.format(size) + ' -size ' + size)
-        cmds.append('-name "first experiment_{0}" -d_x 100 -d_y 500'.format(size) + ' -size ' + size)
-        cmds.append('-name "first experiment_{0}" -d_x 300 -d_y 100'.format(size) + ' -size ' + size)
+        cmds.append('-name "first experiment_{0}" -d_x 500 -d_y 500'.format(str(size)) + ' -size ' + str(size))
+        cmds.append('-name "first experiment_{0}" -d_x 100 -d_y 500'.format(str(size)) + ' -size ' + str(size))
+        cmds.append('-name "first experiment_{0}" -d_x 300 -d_y 100'.format(str(size)) + ' -size ' + str(size))
     return cmds    
 
 def simple_experiment():    
     cmds = []                
-    cmds.append('-name "second experiment" -d_x 500 -d_y 500')
+    cmds.append('-name "second experiment" -d_x 500 -d_y 500 -size 150')
     cmds.append('-name "second experiment" -d_x 100 -d_y 500')
     cmds.append('-name "second experiment" -d_x 300 -d_y 100')
     return cmds
@@ -156,9 +156,10 @@ def sensing_noise(sensing_noise_strength = [0.1, 0.25, 0.5, 0.75, 1], sensing_no
             #cmds.append('-name "sensing_noise experiment_{0}_{1}" -d_x 300 -d_y 100 -sensing_noise_strength {0} -sensing_noise_prob {1}'.format(s,p))
     return cmds
 
-def bottleneck_tests(swarm_size = 150):
+def bottleneck_tests(swarm_size = 150, r = 40, alpha = 40, t = 50, comm_range = 2, command='boundary'):
     cmds = []          
-    cmds.append('-name bottleneck_test_experiment_S{}'.format(swarm_size) + ' -size ' +str(swarm_size))
+    cmds.append('-name bottleneck_test_experiment_S{}'.format(swarm_size) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
+                + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
     return cmds
     
 def trim_cmd(cmd):    
@@ -193,7 +194,7 @@ if __name__ == "__main__":
         elif exp == 8:
             cmds = obstacle()
         elif exp == 9:
-            cmds = maze('simple_new', additions = '-op_xs 500 -op_ys 300 -d_xs 100 -d_ys 300 -cmd_t 5 -cmd "disaster attract"')
+            cmds = maze('simple_new', additions = '-op_xs 500 -op_ys 300 -d_xs 100 -d_ys 300 -cmd_t 5 -cmd "disaster_attract"')
             print(cmds)
         elif exp == 10:
             cmds = new_maze('hard_new')
