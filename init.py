@@ -4,6 +4,7 @@ import os
 import arcade
 import simulation
 import argparse
+# import cProfile
 
 
 EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
@@ -37,8 +38,10 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
 
     directory = sim.directory
         
-    sim.log_setup(directory)      
-    arcade.run()                 
+    sim.log_setup(directory)   
+    arcade.run()              
+    # cProfile.run('arcade.run()')    
+       
     
     #sim.plot_heatmaps(sim.random_drone_confidence_maps, 'Random drone confidence')
     #sim.plot_heatmaps(sim.random_drone_belief_maps, 'Random drone belief')

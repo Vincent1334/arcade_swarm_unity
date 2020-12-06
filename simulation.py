@@ -107,8 +107,8 @@ class Agent(Object):
     def __init__(self, x, y, change_x, change_y, scl, img, sim, reliability = 1, communication_noise = 0):
         super().__init__(x, y, change_x, change_y, scl, img, sim)
         
-        self.confidence_map= np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)]);
-        self.internal_map= np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)]);        
+        self.confidence_map= np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
+        self.internal_map= np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])       
         
         self.reliability = reliability
         self.communication_noise = communication_noise
@@ -116,6 +116,7 @@ class Agent(Object):
         self.grid_pos_x = math.trunc((self.center_x * (self.simulation.GRID_X - 1) / self.simulation.ARENA_WIDTH))
         self.grid_pos_y = math.trunc(((1 - self.center_y / self.simulation.ARENA_HEIGHT ) * (self.simulation.GRID_Y - 1)))
         
+        self.have_communicated = False
         self.message_count_succ = 0
         self.message_count_fail = 0
         
@@ -156,8 +157,10 @@ class Agent(Object):
         '''
         if random.random() > self.simulation.communication_noise_prob:
             #self.communication_noise = random.uniform(0, self.simulation.communication_noise_strength)
-            self.exchange_data(agent, how)
-            self.message_count_succ += 1
+            if self.have_communicated == False:
+                self.exchange_data(agent, how)
+                self.message_count_succ += 1
+                self.have_communicated = True
         else: 
             self.message_count_fail += 1
 
@@ -309,7 +312,7 @@ class Drone(Agent):
          self.global_sobel_y = self.custom_sobel((self.simulation.GRID_X*2 + 1, self.simulation.GRID_Y*2 + 1), axis = 1)
 
 	 
-	 #self.obstacles_current_range = np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)]);                
+	 #self.obstacles_current_range = np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])                
     
     def communicate(self, agent, how = 'average'):            
         super().communicate(agent, how)
@@ -362,8 +365,8 @@ class Drone(Agent):
             jj = self.simulation.GRID_Y + j
             i = self.simulation.GRID_X - self.grid_pos_x
             ii = self.simulation.GRID_X + i
-            k = self.grid_pos_y - j
-            l = self.grid_pos_x - i
+            # k = self.grid_pos_y - j
+            # l = self.grid_pos_x - i
             '''
 
             res = np.sum(np.multiply(self.confidence_map, template[j:jj,i:ii]))
@@ -376,9 +379,15 @@ class Drone(Agent):
             else:
                 return res + self.simulation.BOUNDARY_REPULSION * (np.sum(template[j+k:j,i+l:ii]) + np.sum(template[j:jj,i+l:i]))
             '''
-            return np.sum(np.multiply(self.confidence_map, template[j:jj,i:ii])) + self.simulation.BOUNDARY_REPULSION * (
-                    np.sum(template[:j,:]) + np.sum(template[jj:,:]) + np.sum(template[j:jj,:i]) + np.sum(template[j:jj,ii:]))            
-            
+            #############################################################################################
+            ####################################### CPU Intensive #######################################
+            #############################################################################################
+            return np.sum(np.multiply(self.confidence_map, template[j:jj,i:ii])) + self.simulation.BOUNDARY_REPULSION * ( # Time: 8.1% ######## Hits: 600000 ######## Per Hit: 1.3
+                    np.sum(template[:j,:]) + np.sum(template[jj:,:]) + np.sum(template[j:jj,:i]) + np.sum(template[j:jj,ii:])) # Time: 14.7% ######## Hits: 300000 ######## Per Hit: 42.4
+            #############################################################################################
+            ####################################### /CPU Intensive ######################################
+            #############################################################################################
+
             # Other ways of calculating the velocity, may end up being faster
             #a = np.pad(self.confidence_map, ((self.simulation.GRID_Y - self.grid_pos_y, self.grid_pos_y + 1), (self.simulation.GRID_X - self.grid_pos_x, self.grid_pos_x + 1)), 'constant', constant_values=(self.simulation.BOUNDARY_REPULSION))            
             
@@ -387,16 +396,21 @@ class Drone(Agent):
             #return np.sum(np.multiply(np.pad(self.confidence_map, ((self.simulation.GRID_Y - self.grid_pos_y, self.grid_pos_y + 1), (self.simulation.GRID_X - self.grid_pos_x, self.grid_pos_x + 1)), 'constant', constant_values=(self.simulation.BOUNDARY_REPULSION)), template))
         else:
             result = 0 
-            for i in range(self.grid_pos_y - r, self.grid_pos_y + r + 1):
-                for j in range(self.grid_pos_x - r, self.grid_pos_x + r + 1):
-                    if(i >= 0 and i < self.simulation.GRID_Y and j >= 0 and j < self.simulation.GRID_X):
-                        pixel = self.confidence_map[i][j] * (1 - self.internal_map[i][j])
+            #############################################################################################
+            ####################################### CPU Intensive #######################################
+            #############################################################################################
+            for i in range(self.grid_pos_y - r, self.grid_pos_y + r + 1): # Time: 1.5% ######## Hits: 2400000 ######## Per Hit: 0.5
+                for j in range(self.grid_pos_x - r, self.grid_pos_x + r + 1): # Time: 9.8% ######## Hits: 16800000 ######## Per Hit: 0.5
+                    if(i >= 0 and i < self.simulation.GRID_Y and j >= 0 and j < self.simulation.GRID_X): # Time: 11.9% ######## Hits: 14700000 ######## Per Hit: 0.7
+                        pixel = self.confidence_map[i][j] * (1 - self.internal_map[i][j]) # Time: 28.6% ######## Hits: 14344566 ######## Per Hit: 1.7
                     else:
-                        pixel = 1*self.simulation.BOUNDARY_REPULSION
-                    
-                    result += pixel * template[i - self.grid_pos_y + r][j - self.grid_pos_x + r]    
+                        pixel = 1*self.simulation.BOUNDARY_REPULSION                    
+                    result += pixel * template[i - self.grid_pos_y + r][j - self.grid_pos_x + r] # Time: 22.7% ######## Hits: 14700000 ######## Per Hit: 1.3
             return result
-
+            #############################################################################################
+            ####################################### /CPU Intensive ######################################
+            #############################################################################################
+            
     def predict_belief_map4(self):
         from sklearn.gaussian_process import GaussianProcessRegressor
         from sklearn.gaussian_process.kernels import RBF
@@ -440,7 +454,7 @@ class Drone(Agent):
         from sklearn.gaussian_process import GaussianProcessRegressor
         from sklearn.gaussian_process.kernels import RBF
 
-        threshold = 0
+        # threshold = 0
         #dist = 20
 
         if evolve_top != None:           
@@ -468,7 +482,7 @@ class Drone(Agent):
         Y = []
         
         threshold = 0.5
-        radius = self.simulation.BOUDARY_DIAMETER
+        # radius = self.simulation.BOUDARY_DIAMETER
         
         #Examine neigbourhood only
         
@@ -502,7 +516,7 @@ class Drone(Agent):
         #print('X: ', X.shape)
         
         
-        D = np.zeros((X_dim1,X_dim1))
+        # D = np.zeros((X_dim1,X_dim1))
         
         K = np.zeros((X_dim1,X_dim1))
         
@@ -679,7 +693,7 @@ class SwarmSimulator(arcade.Window):
         
         self.swarm_confidence = []
         self.swarm_internal_error = []        
-        self.drones_positions = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]);  
+        self.drones_positions = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])  
 
         self.operator_confidence = []
         self.operator_internal_error = [] 
@@ -776,7 +790,7 @@ class SwarmSimulator(arcade.Window):
         self.disaster_size = disaster_size
         print( "diaster size: ", self.disaster_size)
 
-        self.disaster_list = arcade.SpriteList();        
+        self.disaster_list = arcade.SpriteList()        
         for i in range (self.disaster_size):            
             d_x, d_y = self.disaster_location[i]            
             if d_x == 'random' or d_x == '':
@@ -996,45 +1010,45 @@ class SwarmSimulator(arcade.Window):
         return np.median(self.get_swarm_internal_error(belief_map))       
 
     def update_map(self):       
-        self.global_map=[[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)];   
+        self.global_map=[[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]   
         
         for j in range(self.GRID_X):
             for i in range(self.GRID_Y):
                  sum_value = 0
                  
                  for adisaster in self.disaster_list:
-                     disaster_grid_center_pos_x = math.trunc((adisaster.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) );
-                     disaster_grid_center_pos_y = math.trunc((adisaster.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) );
-                     dist_x = j -disaster_grid_center_pos_x;
-                     dist_y = i-disaster_grid_center_pos_y;
+                     disaster_grid_center_pos_x = math.trunc((adisaster.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) )
+                     disaster_grid_center_pos_y = math.trunc((adisaster.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) )
+                     dist_x = j -disaster_grid_center_pos_x
+                     dist_y = i-disaster_grid_center_pos_y
                      disaster_witdh = adisaster.width * (self.GRID_X -1)/self.ARENA_WIDTH
 
                      if ((dist_x*dist_x) + (dist_y*dist_y) < disaster_witdh/2 * disaster_witdh/2):
-                         sum_value=1;
+                         sum_value=1
                  
                  for aoperator in self.operator_list:
-                     operator_grid_center_pos_x = math.trunc((aoperator.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) );
-                     operator_grid_center_pos_y = math.trunc((aoperator.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) );
-                     dist_x = j - operator_grid_center_pos_x;
-                     dist_y = i - operator_grid_center_pos_y;
+                     operator_grid_center_pos_x = math.trunc((aoperator.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) )
+                     operator_grid_center_pos_y = math.trunc((aoperator.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) )
+                     dist_x = j - operator_grid_center_pos_x
+                     dist_y = i - operator_grid_center_pos_y
                      operator_width = aoperator.width * (self.GRID_X -1)/self.ARENA_WIDTH + 1
                      operator_height = aoperator.height * (self.GRID_Y -1)/self.ARENA_HEIGHT + 1
                      
                      # As players are not in circular shape, this needs to be changed later 
                      if ((dist_x*dist_x) + (dist_y*dist_y) < operator_width/2 * operator_height/2):
-                           sum_value=1;
+                           sum_value=1
                  '''
                  for obstacle in self.obstacle_list:
-                     obstacle_grid_center_pos_x = math.trunc((obstacle.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) );
-                     obstacle_grid_center_pos_y = math.trunc((obstacle.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) );
+                     obstacle_grid_center_pos_x = math.trunc((obstacle.center_x * (self.GRID_X -1)/self.ARENA_WIDTH) )
+                     obstacle_grid_center_pos_y = math.trunc((obstacle.center_y * (self.GRID_Y -1)/self.ARENA_HEIGHT) )
                      
-                     dist_x = j - obstacle_grid_center_pos_x;
-                     dist_y = i - obstacle_grid_center_pos_y;
+                     dist_x = j - obstacle_grid_center_pos_x
+                     dist_y = i - obstacle_grid_center_pos_y
                      
                      obstacle_witdh = obstacle.width * (self.GRID_X -1)/self.ARENA_WIDTH
 
                      if ((dist_x*dist_x) + (dist_y*dist_y) < obstacle_witdh/2 * obstacle_witdh/2):
-                         sum_value=0;
+                         sum_value=0
                  '''
                  
                  if (sum_value==1):
@@ -1073,7 +1087,7 @@ class SwarmSimulator(arcade.Window):
              print('GLOBAL: ', np.mean(global_f))
              '''
              import pandas as pd
-             distances = df = pd.DataFrame([(v) for k, v in self.drone_distances.items()])
+             distances = pd.DataFrame([(v) for k, v in self.drone_distances.items()])
              distances.to_csv(self.directory + '/distances.csv', sep=',')
 
              '''
@@ -1086,11 +1100,15 @@ class SwarmSimulator(arcade.Window):
 
         # Start update timer
         start_time = timeit.default_timer()
-        
+
         self.timer += 1
 
         if self.online_exp is not None:
             self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
+        
+        # To refresh the communications in drones
+        for drone in self.drone_list:
+            drone.have_communicated = False
         
         #if self.timer % 100 == 0:             
         #     print(self.timer)
@@ -1105,9 +1123,10 @@ class SwarmSimulator(arcade.Window):
             self.obstacle_list.update_animation()
             self.obstacle_list.update()
 
+        """
         if self.timer >= 50:
             self.drone_distances.update(self.get_drone_distances().elements())
-
+        """
         
         self.drone_list.update()
         
@@ -1296,7 +1315,7 @@ class SwarmSimulator(arcade.Window):
                         r = 1 - r/(self.GRID_X/2)
                         self.operator_list[0].confidence_map[i][j] = alpha*r
         elif where == 'disaster attract':
-            y_max, x_max = np.unravel_index(self.operator_list[0].internal_map.argmax(), self.operator_list[0].internal_map.shape)
+            # y_max, x_max = np.unravel_index(self.operator_list[0].internal_map.argmax(), self.operator_list[0].internal_map.shape)
 
             #if self.operator_list[0].internal_map[y_max][x_max] > 0:
             for i in range(self.GRID_Y):
@@ -1326,12 +1345,12 @@ class SwarmSimulator(arcade.Window):
         if (self.exp_type == 6):
             self.save_one_heatmap(selected_drone.internal_map, 'belief_' + str(self.timer), "6th")
         '''
-        data_conf = np.asarray(selected_drone.confidence_map)
+        # data_conf = np.asarray(selected_drone.confidence_map)
         data_internal =  np.asarray(selected_drone.internal_map)        
         data_global = np.asarray(self.global_map)
                 
-        #Rescale to 0-255 and convert to uint8 
-        rescaled_conf = (255.0 * (data_conf - data_conf.min()) / (data_conf.max() - data_conf.min())).astype(np.uint8)
+        # Rescale to 0-255 and convert to uint8 
+        # rescaled_conf = (255.0 * (data_conf - data_conf.min()) / (data_conf.max() - data_conf.min())).astype(np.uint8)
         rescaled_internal = (255.0 * (data_internal - data_internal.min())/ (data_internal.max() - data_internal.min())).astype(np.uint8)
         rescaled_global = (255.0 * (data_global - data_global.min()) / (data_global.max() - data_global.min())).astype(np.uint8)
         
@@ -1348,7 +1367,7 @@ class SwarmSimulator(arcade.Window):
         #cmap = matplotlib.cm.gist_stern
         ax[-1].set_title(" Confidence")  # set title
         #plt.imshow(rescaled_conf, cmap = cm.gist_stern_r,interpolation='nearest')
-        im = plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
+        # im = plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
         
         #plt.imshow(rescaled_conf, cmap = cm.gnuplot2_r,interpolation='nearest')
         ax.append( fig.add_subplot(1, 3, 2) )
@@ -1450,13 +1469,13 @@ class SwarmSimulator(arcade.Window):
     def save_boxplots(self, maps, title, directory="temp"):
         #maps_reverse = np.rot90(maps)
         '''
-        maps_reverse = np.array([[0.0 for i in range(len(maps[1]))] for j in range(len(maps[0]))]);
+        maps_reverse = np.array([[0.0 for i in range(len(maps[1]))] for j in range(len(maps[0]))])
         for i in range (len(maps[0])):
             for j in range (len(maps[1])):
                 maps_reverse[j][i] = maps[i][j]
         '''
         '''
-        map_precentiles = np.array([[0.0 for i in range(4)] for j in range(len(maps))]);
+        map_precentiles = np.array([[0.0 for i in range(4)] for j in range(len(maps))])
         for i in range (len(maps)):
     	     map_precentiles [i][0] = i+1
     	     map_precentiles [i][1] = np.percentile(maps[i], 25)
@@ -1484,7 +1503,7 @@ class SwarmSimulator(arcade.Window):
                    print("drone selected with collision radius :",selected_drone.collision_radius)
                    break
             if(selected_drone==None):
-                 return;            
+                return
             self.display_selected_drone_info(selected_drone)      
             
     def on_draw(self):
