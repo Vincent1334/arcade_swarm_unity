@@ -31,7 +31,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         os.mkdir('outputs/' + name_of_experiment)
     if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
         os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
-    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/preformance_test')):
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
         os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
         
     sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
@@ -64,7 +64,8 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
     sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
     
     # Saving images of plots
-    os.makedirs(directory + '/map_images')
+    if not os.path.isdir(directory + '/map_images'):
+        os.makedirs(directory + '/map_images')
     sim.save_image_plot_heatmaps(sim.operator_confidence_maps, 'operator confidence', directory)
     sim.save_image_plot_heatmaps(sim.operator_belief_maps, 'operator belief', directory)
 
