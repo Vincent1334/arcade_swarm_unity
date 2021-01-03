@@ -156,10 +156,18 @@ def sensing_noise(sensing_noise_strength = [0.1, 0.25, 0.5, 0.75, 1], sensing_no
             #cmds.append('-name "sensing_noise experiment_{0}_{1}" -d_x 300 -d_y 100 -sensing_noise_strength {0} -sensing_noise_prob {1}'.format(s,p))
     return cmds
 
-def bottleneck_tests(swarm_size = 150, r = 40, alpha = 40, t = 50, comm_range = 2, command='boundary'):
-    cmds = []          
-    cmds.append('-name bottleneck_test_experiment_S{}'.format(swarm_size) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
-                + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
+def bottleneck_tests(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_range = 2):
+    cmds = []  
+    for exp_num in range(1):
+        cmds.append('-name bottleneck_test_experiment_S{}_E{}'.format(swarm_size, exp_num) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
+                    + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
+    return cmds
+
+def online_experiment(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_range = 2, online_exp = "Normal_Network"):
+    cmds = []  
+    for exp_num in range(1):
+        cmds.append('-name bottleneck_test_experiment_S{}_E{}'.format(swarm_size, exp_num) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
+                    + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -online_exp ' + str(online_exp))
     return cmds
     
 def trim_cmd(cmd):    
@@ -226,6 +234,8 @@ if __name__ == "__main__":
             cmds = sensing_noise(sensing_noise_strength = [0.5, 0.75, 1], sensing_noise_prob = [0.8, 0.9, 0.99])
         elif exp == 24:
             cmds = bottleneck_tests()
+        elif exp == 25:
+            cmds = online_experiment()
         
             
         for cmd in cmds:            

@@ -7,8 +7,9 @@ from matplotlib import pyplot as plt
 import collections
 import os
 import timeit
+import json
 import pyglet
-from network import gameNetwork
+import requests
 from fps_test_modules import FPSCounter
 
 
@@ -702,9 +703,7 @@ class SwarmSimulator(arcade.Window):
         self.begining = time.time()   
         
         self.online_exp = online_exp
-        
-        if online_exp is not None:
-            self.network = gameNetwork()
+        self.sim_net_id = ''
             
         # FPS TEST parameters
         self.processing_time = 0
@@ -728,7 +727,8 @@ class SwarmSimulator(arcade.Window):
               alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, operator_vision_radius = 150, 
               communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999, GP = False, gp_step = 50,
               maze = None, through_walls = True,
-              communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0, positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0):        
+              communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0, positioning_noise_prob = 0, sensing_noise_strength = 0,
+              sensing_noise_prob = 0, sim_net_id = ''):        
 
         #Communication noise
         self.communication_noise_strength = communication_noise_strength
@@ -751,9 +751,9 @@ class SwarmSimulator(arcade.Window):
         
         self.LOSING_CONFIDENCE_RATE = aging_factor
         
-        self.drone_list = arcade.SpriteList(use_spatial_hash=False)  
-        self.operator_list = arcade.SpriteList(use_spatial_hash=False)
-        self.obstacle_list = arcade.SpriteList(use_spatial_hash=False) 
+        self.drone_list = arcade.SpriteList()  
+        self.operator_list = arcade.SpriteList()
+        self.obstacle_list = arcade.SpriteList() 
         
         self.influenced_drone = None
         
@@ -785,6 +785,8 @@ class SwarmSimulator(arcade.Window):
         self.collision_counter = 0
 
         self.drone_distances = collections.Counter({k:0 for k in range(851)})
+        
+        self.sim_net_id = sim_net_id
         
         # initializing disaster objects
         self.disaster_size = disaster_size
@@ -1103,9 +1105,6 @@ class SwarmSimulator(arcade.Window):
 
         self.timer += 1
 
-        if self.online_exp is not None:
-            self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
-        
         # To refresh the communications in drones
         for drone in self.drone_list:
             drone.have_communicated = False
@@ -1281,7 +1280,11 @@ class SwarmSimulator(arcade.Window):
                     self.fps_list.append(round(self.fps.get_fps(), 1))
                     self.processing_time_list.append(self.processing_time)
                     self.drawing_time_list.append(self.draw_time)
-                    
+
+        if self.online_exp is not None:
+            self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
+        
+        
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
             for i in range(self.GRID_Y):
@@ -1526,6 +1529,20 @@ class SwarmSimulator(arcade.Window):
         Send simulation information to web API
         :return: Json object
         """
-        data = {'id': self.network.id,'timestep': self.timer, 'confidence_cords': operator.confidence_map, 'belief_cords': operator.internal_map}
-        reply = self.net.send(data)
-        return reply
+        conf_map_ls = operator.confidence_map.tolist()
+        belief_map_ls = operator.internal_map.tolist()
+        data = {"id": self.sim_net_id,"timestep": self.timer, "confidence_cords": conf_map_ls, "belief_cords": belief_map_ls}
+        r = requests.post('http://localhost', json=data)
+
+
+    def network_command(self, operation, x=0, y=0):
+        if operation == "attract":
+            for drone in self.drone_list:
+                drone.confidence_map[x][y] = 0
+        elif operation == "deflect":
+            for drone in self.drone_list:
+                drone.confidence_map[x][y] = 1
+        elif operation == "close":
+            arcade.close_window()
+        else:
+            print("Operation not defined!")
