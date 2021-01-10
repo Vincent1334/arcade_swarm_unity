@@ -1,0 +1,36 @@
+<div class="z-depth-1 grey lighten-4 row" style=" display: inline-block; padding: 32px 48px 0px 48px; border: 1px solid #EEE;">
+    <div class="section"> </div>
+
+    <h5 class="grey-text">Please complete the following informations if you would like : </h5>
+
+    <div class="section"></div>
+
+    <form class="col s12" method="post">
+        <div class='row'>
+            <div class='col s12'></div>
+        </div>
+
+        <div class='row'>
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="input-field col s6">
+                    {{ field }}
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <br />
+        <center>
+            <div class='row'>
+                <button class="btn btn-large success" name="cookies-accepted">
+                  Accept Cookies
+                </button>
+                <button class="btn btn-large danger" name="cookies-denied">
+                  Deny Cookies
+                </button>
+            </div>
+        </center>
+    </form>
+</div>

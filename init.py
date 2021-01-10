@@ -35,7 +35,11 @@ def threaded_client(conn, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_expe
         p.execute(data, r_len)
         reply = json.loads(p.recv_body())
         if reply["operation"] == "start": # In case a user initiate a game on web-application
-            sim_net_id = str(uuid.uuid4())[:8]
+            sim_net_id = reply["id"]
+            GRID_X = reply["config"]["width"]
+            GRID_Y = reply["config"]["height"]
+            SWARM_SIZE = reply["config"]["drones"]
+
             sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
                                             SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
             sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
@@ -72,15 +76,14 @@ def threaded_client(conn, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_expe
             
         elif reply["operation"] == "update":
             instance_id = reply["id"]
-            locations = ast.literal_eval(reply["location"]) 
-            x_change = locations[0]
-            y_change = locations[1]
+            x_change = reply["location"][0]
+            y_change = reply["location"][1]
             instance = sim_instances[instance_id]
             
             if reply["type"] == "attract":
                 instance.network_command("attract", x_change, y_change)    
             elif reply["type"] == "deflect":
-                instance.network_command("attract", x_change, y_change)
+                instance.network_command("deflect", x_change, y_change)
 
             http_reply = "HTTP/1.1 200 OK\n" \
                         "Content-Type: text/html\n" \

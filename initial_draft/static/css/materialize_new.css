@@ -1,0 +1,83 @@
+body{
+    background-color :  #f5f5f5
+}
+
+.my-content{
+    padding: 0 .75rem;
+}
+
+.my-nav{
+    background-color: #00897b;
+}
+
+li > a{
+    background-color: #1976d2!important;
+    margin-top: 10px!important;
+}
+
+.material-icons{
+    font-size: 16px!important;
+    display: inline-block!important;
+    margin-right: 5px;
+}
+
+.subheader{
+    padding-left: 10px;
+}
+
+.badge-success{
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: #fff!important;
+    background-color: #26a69a;
+    border-radius: 2px;
+}
+
+.badge-warning{
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: #fff!important;
+    background-color: #fb8c00;
+    border-radius: 2px;
+
+}
+
+.badge-secondary{
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: #fff!important;
+    background-color: #757575;
+    border-radius: 2px;
+}
+
+.rotate_90{
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    transform: rotate(90deg);
+    top: 15px!important;
+}
+
+.google_map{
+    min-height: 500px;
+}
+
+.map_cell{
+    width: 40px;
+    height: 40px;
+    border: black solid 1px;
+    display: inline-block;
+}
+
+.map_row{
+    margin-top: -4px;
+}
+
+.success{
+    background-color: #28a745;
+}
+
+.danger{
+    background-color: #dc3545;
+}

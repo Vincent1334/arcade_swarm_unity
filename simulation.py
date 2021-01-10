@@ -11,6 +11,7 @@ import json
 import pyglet
 import requests
 from fps_test_modules import FPSCounter
+import time as timeclock
 
 
 '''
@@ -1529,10 +1530,17 @@ class SwarmSimulator(arcade.Window):
         Send simulation information to web API
         :return: Json object
         """
+        api_server = 'http://localhost:8000'
         conf_map_ls = operator.confidence_map.tolist()
         belief_map_ls = operator.internal_map.tolist()
-        data = {"id": self.sim_net_id,"timestep": self.timer, "confidence_cords": conf_map_ls, "belief_cords": belief_map_ls}
-        r = requests.post('http://localhost', json=data)
+        data = {
+            "config":{
+                "confidence": conf_map_ls,
+                "belief": [],
+            },
+        }
+
+        r = requests.post(api_server + '/api/v1/simulations/' + self.sim_net_id + '/timestep/' + str(self.timer), json=data)
 
 
     def network_command(self, operation, x=0, y=0):

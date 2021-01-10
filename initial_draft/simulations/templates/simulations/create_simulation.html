@@ -1,0 +1,10 @@
+{% extends 'base/base.html' %}
+
+{% block page_content %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <simulation-form></simulation-form>
+    </form>
+
+{% endblock %}
