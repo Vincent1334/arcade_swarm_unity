@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include 'base/head.html' %}
+    </head>
+    <body>
+
+        <main>
+            <div class="row">
+                    <div class="col s12 l4 offset-l4">
+                        <div class="card horizontal">
+                            <div class="card-stacked">
+                                <div class="card-content">
+                                    <span class="card-title"> Note </span>
+                                    <p>We use cookies in order to help us running this experiments. We record the following informations : </p>
+                                    <ul>
+                                        <li>The actions you take when playing the game, such as : zooming the map, clicking on the map etc.</li>
+                                        <li>For how long you play the game.</li>
+                                    </ul>
+                                    <p>If you would like to enable cookies, click the 'Accept cookies' button. If you DO NOT want cookies use, click the 'Deny Cookies' button.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <center>
+                <div class="container">
+                    {% if user is None %}
+                        {% include 'simulations/new_user_form.html' %}
+                    {% else %}
+                        {% include 'simulations/returning_user_form.html' %}
+                    {% endif %}
+                </div>
+            </center>
+
+        </main>
+
+    </body>
+</html>
