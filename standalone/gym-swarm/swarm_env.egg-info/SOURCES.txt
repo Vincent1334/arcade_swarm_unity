@@ -1,0 +1,7 @@
+README.md
+setup.py
+swarm_env.egg-info/PKG-INFO
+swarm_env.egg-info/SOURCES.txt
+swarm_env.egg-info/dependency_links.txt
+swarm_env.egg-info/requires.txt
+swarm_env.egg-info/top_level.txt

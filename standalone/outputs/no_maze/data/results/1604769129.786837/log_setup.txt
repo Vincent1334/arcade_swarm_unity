@@ -1,0 +1,49 @@
+GENERAL INFO:
+  -- ARENA HEIGHT: 600
+  -- ARENA WIDTH: 600
+  -- GRID_X: 40
+  -- GRID_Y: 40
+  -- GRANULARITY: 10
+  -- COMMAND STRENGTH: 10
+  -- ORDINARY COMMAND: None
+  -- ORDINARY COMMAND INTERVAL: 0
+  -- CONSTANT REPULSION CENTER: False
+  -- VELOCITY WEIGHT COEFFICIENT: 0.01
+  -- BOUNDARY REPULSION: 1
+  -- AGING COEFFICIENT: 0.9999
+  -- INPUT TIME: 300
+  -- GAUSSIAN PROCESSES: False at each 50 steps 
+
+OPERATORS INFO:
+  -- OPERATORS COOMUNICATION RANGE: 100
+  -- OPERATORS SIZE: 1
+  -- operator 0: x position: 500 & y position: 300
+
+DISASTERS INFO:
+  -- DISASTERS SIZE: 1
+  -- disaster 0: x position: 100 & y position: 300 & is moving: False
+
+DRONE INFO:
+  -- SWARM SIZE: 15
+  -- DRONE RELIABILITY RANGE: (100, 99)
+  -- DRONE UNRELIABILITY PERCENTAGE: 0
+  -- DRONE COMMUNICATION NOISE RANGE: (0.0, 0.0)
+  -- DRONE COMMUNICATION RANGE: 4
+  -- DRONE BELIEF VISION RANGE: 2
+  -- DRONE CONFIDENCE VISION RANGE: 2
+
+  -- drone 0: reliability: 1 & communication noise: 0.0
+  -- drone 1: reliability: 1 & communication noise: 0.0
+  -- drone 2: reliability: 1 & communication noise: 0.0
+  -- drone 3: reliability: 1 & communication noise: 0.0
+  -- drone 4: reliability: 1 & communication noise: 0.0
+  -- drone 5: reliability: 1 & communication noise: 0.0
+  -- drone 6: reliability: 1 & communication noise: 0.0
+  -- drone 7: reliability: 1 & communication noise: 0.0
+  -- drone 8: reliability: 1 & communication noise: 0.0
+  -- drone 9: reliability: 1 & communication noise: 0.0
+  -- drone 10: reliability: 1 & communication noise: 0.0
+  -- drone 11: reliability: 1 & communication noise: 0.0
+  -- drone 12: reliability: 1 & communication noise: 0.0
+  -- drone 13: reliability: 1 & communication noise: 0.0
+  -- drone 14: reliability: 1 & communication noise: 0.0
