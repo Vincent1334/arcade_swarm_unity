@@ -224,9 +224,10 @@
 
             draw_disasters(disasters){
                 disasters.forEach((disaster) => {
-                    let coords = this.rectangles[disaster[0]][disaster[1]].marker_pos;
-                    this.rectangles[disaster[0]][disaster[1]].overlay.fillColor = "red";
-                    this.rectangles[disaster[0]][disaster[1]].overlay.fillOpacity = 1;
+                    let coords = disaster[0];
+                    let opacity = disaster[1];
+                    this.rectangles[coords[0]][coords[1]].overlay.fillColor = "red";
+                    this.rectangles[coords[0]][coords[1]].overlay.fillOpacity = opacity;
                 });
             },
 
@@ -244,7 +245,7 @@
                         let disasters = data.belief;
                         let confidence = data.confidence;
 
-                        this.draw_confidence(confidence);django_content_type
+                        this.draw_confidence(confidence);
                         this.draw_disasters(disasters);
                     }
                 }
