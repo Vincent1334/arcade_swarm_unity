@@ -404,7 +404,8 @@ class Drone(Agent):
             for i in range(self.grid_pos_y - r, self.grid_pos_y + r + 1): # Time: 1.5% ######## Hits: 2400000 ######## Per Hit: 0.5
                 for j in range(self.grid_pos_x - r, self.grid_pos_x + r + 1): # Time: 9.8% ######## Hits: 16800000 ######## Per Hit: 0.5
                     if(i >= 0 and i < self.simulation.GRID_Y and j >= 0 and j < self.simulation.GRID_X): # Time: 11.9% ######## Hits: 14700000 ######## Per Hit: 0.7
-                        pixel = self.confidence_map[i][j] * (1 - self.internal_map[i][j]) # Time: 28.6% ######## Hits: 14344566 ######## Per Hit: 1.7
+                        # pixel = self.confidence_map[i][j] * (1 - self.internal_map[i][j]) # Time: 28.6% ######## Hits: 14344566 ######## Per Hit: 1.7
+                        pixel = self.confidence_map[i][j]
                     else:
                         pixel = 1*self.simulation.BOUNDARY_REPULSION                    
                     result += pixel * template[i - self.grid_pos_y + r][j - self.grid_pos_x + r] # Time: 22.7% ######## Hits: 14700000 ######## Per Hit: 1.3
