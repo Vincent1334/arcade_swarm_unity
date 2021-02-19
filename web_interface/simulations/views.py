@@ -217,7 +217,7 @@ class SimulationViewSet(viewsets.ModelViewSet):
 
         if request.method == "POST":
             user = None
-            if request.data['cookie'] is not 'denied_cookie':
+            if request.data['cookie'] != 'denied_cookie':
                 user = SimulationPlayer.objects.get(cookie=request.data['cookie'])
 
             action = UserAction(

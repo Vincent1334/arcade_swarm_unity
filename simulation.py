@@ -1534,10 +1534,12 @@ class SwarmSimulator(arcade.Window):
         api_server = 'http://localhost:8000'
         conf_map_ls = operator.confidence_map.tolist()
         belief_map_ls = operator.internal_map.tolist()
+
         data = {
             "config":{
                 "confidence": conf_map_ls,
-                "belief": [],
+                "belief": [[[r, c], belief_map_ls[r][c]] for r in range(len(belief_map_ls))
+                           for c in range(len(belief_map_ls[r])) if belief_map_ls[r][c] > 0],
             },
         }
 
