@@ -254,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument('-walls', type = bool, default = False) #communication through walls
     parser.add_argument('-run_time', type = int, default = 1000) #communication through walls
     parser.add_argument('-communication_noise_strength', type = float, default = 0) 
-    parser.add_argument('-communication_noise_prob', type = float, default = 0) 
+    parser.add_argument('-communication_noise_prob', type = float, default = 0) # comm rate
     parser.add_argument('-positioning_noise_strength', type = float, default = 0) 
     parser.add_argument('-positioning_noise_prob', type = float, default = 0) 
     parser.add_argument('-sensing_noise_strength', type = float, default = 0) 
