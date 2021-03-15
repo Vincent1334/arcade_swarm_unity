@@ -175,7 +175,7 @@
 
                  this.socket.onmessage = function (event) {
                     console.log(event.data);
-                    this.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
+                    // this.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
                 };
 
                 this.socket.onopen = function(event){
@@ -299,7 +299,7 @@
             async play(){
                 let req;
 
-                for( var i = 1; i <= 0; i++ ){
+                for( var i = 1; i <= 100; i++ ){
                     req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);
                     this.current_timestep = i;
 
