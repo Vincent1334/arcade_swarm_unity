@@ -3,10 +3,32 @@
         <div class="card-content">
             <span class="card-title"> Simulation Map </span>
 
-            <h1>{{ current_timestep }}</h1>
+            <div class="row">
+                <div class="col s12">
+                    <h4 style="display: inline-block;">Current timestep : {{ current_timestep }}</h4>
+        
+                    <button v-if="game_done" data-target="results_modal" class="btn modal-trigger"
+                            style="display: inline; margin-left: 10px; margin-top: -10px">
+                        View Results
+                    </button>
+                </div>
+            </div>
 
             <div id="map" class="google_map" style="height: 800px;">
             </div>
+
+            <div id="results_modal" class="modal" v-if="game_done">
+                <div class="modal-content">
+                    <h4>Game Results</h4>
+                    <p> Game Score : {{ game_score }} </p>
+                    <p> Time played : {{ game_time_played }} </p>
+                </div>
+                <div class="modal-footer">
+                    <a class="modal-close btn-flat">Close</a>
+                    <a href="/simulations/create" class="modal-close btn-flat">New game</a>
+                </div>
+            </div>
+
         </div>
     </div>
 </template>
@@ -32,6 +54,9 @@
                 current_timestep:0,
 
                 socket: null,
+                game_done:false,
+                game_score:0,
+                game_time_played:"",
             }
         },
         methods:{
@@ -91,6 +116,19 @@
                 xhr.send(JSON.stringify(data));
             },
 
+            PATCH(data, url, headers = null){
+                var xhr = new XMLHttpRequest();
+                xhr.open("PATCH", url, true);
+                if(headers === null){
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                }else{
+                    Object.keys(headers).forEach((key) => {
+                        xhr.setRequestHeader(key, headers[key]);
+                    });
+                }
+                xhr.send(JSON.stringify(data));
+            },
+
             // send operator action
             send_operator_action(action_name, row, col){
                 let json_data = {
@@ -106,7 +144,7 @@
                 let json_data = {
                     "action": action_name,
                     "time": new Date(),
-                    "timestep": 0, // need to implement once we finish integrating and revamping the play function
+                    "timestep": this.current_timestep, // need to implement once we finish integrating and revamping the play function
                     "simulation_id": this.simulation.id,
                     "cookie": this.cookie
                 };
@@ -175,39 +213,12 @@
 
                  this.socket.onmessage = function (event) {
                     console.log(event.data);
-                    this.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
+                    app.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
                 };
 
                 this.socket.onopen = function(event){
                     app.socket.send(JSON.stringify(data));
                 }
-
-                // let headers = {'Content-type': 'application/json', 'Accept': 'application/json'};
-                // this.SEND(data, 'http://localhost:5555', headers);
-
-                // var socket = io('ws://localhost:5555');
-                // Vue.use(VueSocketIOExt, socket);
-                // socket.send('test')
-
-                // io.on('http://localhost:5555', (socket) => {
-                //     socket.broadcast.emit('test');
-                // });
-                // socket.on("connect", () => {
-                //     // either with send()
-                //     socket.send('test');
-                // });
-                //
-                // socket.on("message", data => {
-                //   console.log(data);
-                // });
-
-                // let ws = io("ws://localhost:8765/", {
-                //     cors:{
-                //         origin:'http://localhost:8000',
-                //         methods: ["GET", "POST"],
-                //
-                //     }
-                // });
             },
 
             // map processing
@@ -300,21 +311,38 @@
                 let req;
 
                 for( var i = 1; i <= 0; i++ ){
-                    req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);
-                    this.current_timestep = i;
+                    if(!this.game_done) {
+                        req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);
+                        this.current_timestep = i;
 
-                    if( req[0] !== undefined ) {
-                        let data = JSON.parse(req[0].config.replaceAll("\'", "\""));
+                        if (req[0] !== undefined) {
+                            let data = JSON.parse(req[0].config.replaceAll("\'", "\""));
 
-                        let disasters = data.belief;
-                        let confidence = data.confidence;
+                            let disasters = data.belief;
+                            let confidence = data.confidence;
 
-                        this.draw_confidence(confidence);
-                        this.draw_disasters(disasters);
-                    }
+                            this.draw_confidence(confidence);
+                            this.draw_disasters(disasters);
+                        }
+                    }else
+                        break;
                 }
-            }
+
+                this.finish_game();
+            },
+
+            finish_game(){
+                // get score and time played
+                this.game_done = true;
+
+                $(document).ready(function(){
+                    $('.modal').modal();
+                    // $('.modal').modal('open');
+                });
+
+            },
         },
+
         mounted(){
             this.map_bounds.north = this.config.NE.lat;
             this.map_bounds.south = this.config.SW.lat;

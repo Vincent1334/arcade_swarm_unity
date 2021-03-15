@@ -123,7 +123,7 @@ def view_simulation(request, sim_id):
 class SimulationViewSet(viewsets.ModelViewSet):
     queryset = Simulation.objects.all()
     serializer_class = SimulationSerializer
-    http_method_names = ['get', 'post']
+    http_method_names = ['get', 'post', 'patch']
 
     @action(detail=True, methods=['get'])
     def config(self, request, pk):

@@ -30,6 +30,12 @@ class Simulation(CommonInfo):
     width = models.IntegerField()
     height = models.IntegerField()
     drones = models.IntegerField()
+    score = models.FloatField(default=0)
+
+    @property
+    def time_played(self):
+        td = self.updated_at - self.created_at
+        return '{0}:{1}:{2}'.format(td.days, td.seconds//3600, (td.seconds//60)%60)
 
     def save(self, *args, **kwargs):
         status = {

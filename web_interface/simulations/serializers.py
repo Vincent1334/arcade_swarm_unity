@@ -8,7 +8,7 @@ class SimulationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Simulation
         fields = ['url', 'id', 'created_at', 'updated_at', 'name', 'status', 'status_label', 'level', 'width', 'height',
-                  'drones']
+                  'drones', 'score', 'time_played']
 
 
 class SimulationConfigSerializer(serializers.HyperlinkedModelSerializer):
