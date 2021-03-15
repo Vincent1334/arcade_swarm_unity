@@ -72,13 +72,13 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
 
             if message_data["operation"] == "update":
                 instance_id = message_data["id"]
-                x_change = message_data["location"][0]
-                y_change = message_data["location"][1]
+                x_change = message_data["pos"][0]
+                y_change = message_data["pos"][1]
                 instance = sim_instances[instance_id]
 
-                if message_data["type"] == "attract":
+                if message_data["action"] == "attract":
                     instance.network_command("attract", x_change, y_change)
-                elif message_data["type"] == "deflect":
+                elif message_data["action"] == "deflect":
                     instance.network_command("deflect", x_change, y_change)
 
             elif message_data["operation"] == "close":
