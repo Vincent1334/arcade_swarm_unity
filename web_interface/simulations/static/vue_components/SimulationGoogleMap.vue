@@ -126,17 +126,24 @@
                 xhr.send(JSON.stringify(data));
             },
 
-            PATCH(data, url, headers = null){
-                var xhr = new XMLHttpRequest();
-                xhr.open("PATCH", url, true);
-                if(headers === null){
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                }else{
-                    Object.keys(headers).forEach((key) => {
-                        xhr.setRequestHeader(key, headers[key]);
-                    });
-                }
-                xhr.send(JSON.stringify(data));
+            async PATCH(data, url){
+                let resp = null;
+                await fetch(url,{
+                    method:'PATCH',
+                    body:JSON.stringify(data),
+                    headers: {"Content-type": "application/json; charset=UTF-8"},
+                }).then(response => response.json())
+                .then(json_parsed => {
+                    if( (json_parsed instanceof Array && json_parsed.length > 0) ||
+                        (json_parsed instanceof Object && Object.keys(json_parsed).length > 0) ){
+                            resp = json_parsed;
+                    }
+
+                })
+                .catch(err => {
+                    console.log('Request Failed', err);
+                });
+                return resp;
             },
 
             // send operator action
@@ -229,10 +236,22 @@
                  this.socket.onmessage = async function (event) {
                     let resp = JSON.parse(event.data);
 
-                     if(resp.operation === "start"){
+                     if(resp.operation === "start") {
                          app.play_flag = true;
                          app.total_timesteps = parseInt(resp.timesteps);
                          await app.play();
+                     }else if(resp.operation === "close"){
+                         let data = {
+                            'score':resp['score'],
+                         };
+                         let req  = await app.PATCH(data, `/api/v1/simulations/${app.simulation.id}/`);
+                         console.log(req);
+
+                         if (req !== undefined) {
+                            app.game_time_played = req['time_played'];
+                            app.game_time_played = req['score'];
+                         }
+
                      }else if(resp.operation === "get_data"){
                          // handle data update
                          console.log(resp);

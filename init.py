@@ -58,8 +58,11 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
     sim.log_setup(directory)
     sim_instances[sim_net_id] = sim
 
-    await ws.send(json.dumps({"operation": "start", "timesteps": 100}))
+    await ws.send(json.dumps({"operation": "start", "timesteps": run_time}))
     arcade.run()
+    # the map to get the score from
+    print(sim.operator_list[0].confidence_map)
+    await ws.send(json.dumps({"operation": "close", "score": 0}))
 
     while True:
         try:
@@ -92,7 +95,7 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
 
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
 # Could be used with different swarm sizes, reliability ranges and percentages, and communication noise
-def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = EXP_D_T, run_time = 1000, INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
+def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experiment = EXP_D_T, run_time = 10, INPUT_TIME = 300, GRID_X = 40, GRID_Y = 40,
                disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random', reliability = (100, 101), unreliability_percentage = 0, 
                moving_disaster = False, communication_noise = 0, alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, 
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,

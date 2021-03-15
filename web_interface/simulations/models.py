@@ -35,7 +35,7 @@ class Simulation(CommonInfo):
     @property
     def time_played(self):
         td = self.updated_at - self.created_at
-        return '{0}:{1}:{2}'.format(td.days, td.seconds//3600, (td.seconds//60)%60)
+        return '{0}:{1}:{2}'.format(td.seconds//3600, (td.seconds%3600)//60, td.seconds%60)
 
     def save(self, *args, **kwargs):
         status = {
