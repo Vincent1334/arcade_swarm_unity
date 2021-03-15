@@ -170,6 +170,13 @@ def online_experiment(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_rang
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -online_exp ' + str(online_exp))
     return cmds
     
+def accuracy_diag(swarm_size = 10, r = 40, alpha = 0.99, t = 300, comm_range = 0):
+    cmds = []  
+    for exp_num in range(10):
+        cmds.append('-name accuracy_test_S{}_E{}_CR{}'.format(swarm_size, exp_num, comm_range) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
+                    + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
+    return cmds
+
 def trim_cmd(cmd):    
     PATTERN = re.compile(r'''((?:[^ "]|"[^"]*")+)''')
     cmd = PATTERN.split(cmd)[1::2]
@@ -236,7 +243,8 @@ if __name__ == "__main__":
             cmds = bottleneck_tests()
         elif exp == 25:
             cmds = online_experiment()
-        
+        elif exp == 26:
+            cmds = accuracy_diag()
             
         for cmd in cmds:            
             proc = subprocess.Popen([sys.executable, 'init.py'] + trim_cmd(cmd))
