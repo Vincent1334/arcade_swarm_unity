@@ -1,35 +1,43 @@
 <template id="template">
-    <div class="card">
-        <div class="card-content">
-            <span class="card-title"> Simulation Map </span>
+    <div class="row">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title"> Simulation Map </span>
 
-            <div class="row">
-                <div class="col s12">
-                    <h4 style="display: inline-block;">Current timestep : {{ current_timestep }}</h4>
-        
-                    <button v-if="game_done" data-target="results_modal" class="btn modal-trigger"
-                            style="display: inline; margin-left: 10px; margin-top: -10px">
-                        View Results
-                    </button>
-                </div>
-            </div>
+                <div class="row">
+                    <div class="col s12">
+                        <h6 style="display: inline-block;">Current timestep : {{ current_timestep }}</h6>
 
-            <div id="map" class="google_map" style="height: 800px;">
-            </div>
+                        <button v-if="game_done" data-target="results_modal" class="btn modal-trigger"
+                                style="display: inline; margin-left: 10px;">
+                            View Results
+                        </button>
+                    </div>
+                </div>
 
-            <div id="results_modal" class="modal" v-if="game_done">
-                <div class="modal-content">
-                    <h4>Game Results</h4>
-                    <p> Game Score : {{ game_score }} </p>
-                    <p> Time played : {{ game_time_played }} </p>
+                <div id="map" class="google_map" style="height: 700px;">
                 </div>
-                <div class="modal-footer">
-                    <a class="modal-close btn-flat">Close</a>
-                    <a href="/simulations/create" class="modal-close btn-flat">New game</a>
+
+                <div id="results_modal" class="modal" v-if="game_done">
+                    <div class="modal-content">
+                        <h4>Game Results</h4>
+                        <p> Game Score : {{ game_score }} </p>
+                        <p> Time played : {{ game_time_played }} </p>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="modal-close btn-flat">Close</a>
+                        <a href="/simulations/create" class="modal-close btn-flat">New game</a>
+                    </div>
                 </div>
+
             </div>
 
         </div>
+
+        <div class="loader-holder" v-if="!play_flag">
+            <div class="loader" ></div>
+        </div>
+
     </div>
 </template>
 
@@ -57,6 +65,8 @@
                 game_done:false,
                 game_score:0,
                 game_time_played:"",
+                play_flag:false,
+                total_timesteps: 100,
             }
         },
         methods:{
@@ -166,9 +176,9 @@
                 this.createInitialGrid(null);
                 this.add_listeners();
 
-                this.set_socket();
+                this.map.map.set('disableDoubleClickZoom', true);
 
-                await this.play();
+                await this.set_socket();
             },
 
             add_rectangle(){
@@ -186,21 +196,24 @@
 
             add_listeners(){
                 this.map.map.addListener("dragend", () => {
-                    this.send_behaviour("dragged");
+                    if(!app.game_done)
+                        this.send_behaviour("dragged");
                 });
 
                 this.map.map.addListener("zoom_changed", () => {
                     if( this.map_zoom < this.map.map.getZoom() ){
-                        this.send_behaviour("zoom_in");
+                        if(!app.game_done)
+                            this.send_behaviour("zoom_in");
                     }else{
-                        this.send_behaviour("zoom_out");
+                        if(!app.game_done)
+                            this.send_behaviour("zoom_out");
                     }
                     this.map_zoom = this.map.map.getZoom();
                 });
 
             },
 
-            set_socket(){
+            async set_socket(){
                 let app = this;
                 this.socket = new WebSocket('ws://localhost:8765');
                 let data = {
@@ -213,13 +226,13 @@
                     }
                 };
 
-                 this.socket.onmessage = function (event) {
+                 this.socket.onmessage = async function (event) {
                     let resp = JSON.parse(event.data);
 
-                    console.log(resp);
-
                      if(resp.operation === "start"){
-                         // app.start_game();
+                         app.play_flag = true;
+                         app.total_timesteps = parseInt(resp.timesteps);
+                         await app.play();
                      }else if(resp.operation === "get_data"){
                          // handle data update
                          console.log(resp);
@@ -273,11 +286,13 @@
                         });
 
                         rectangle.addListener("click", () => {
-                            this.send_operator_action("attract", row, col);
+                            if(!app.game_done)
+                                this.send_operator_action("attract", row, col);
                         });
 
                         rectangle.addListener("rightclick", () => {
-                            this.send_operator_action("deflect", row, col);
+                            if(!app.game_done)
+                                this.send_operator_action("deflect", row, col);
 
                         });
 
@@ -319,7 +334,7 @@
 
             async play(){
                 let req;
-                for( var i = 1; i <= 0; i++ ){
+                for( var i = 1; i <= this.total_timesteps; i++ ){
                     if(!this.game_done) {
                         req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);
                         this.current_timestep = i;
@@ -346,7 +361,7 @@
 
                 $(document).ready(function(){
                     $('.modal').modal();
-                    // $('.modal').modal('open');
+                    $('.modal').modal('open');
                 });
 
             },

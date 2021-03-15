@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="input-field col s4">
-                    <select id="level" name="level" v-model="level_selected">
+                    <select id="level" name="level" v-model="level_selected" required>
                         <option value="" disabled selected>Please select a diffuclty level</option>
                         <option v-for="level in levels" :value="level.value">{{ level.desc }}</option>
                     </select>

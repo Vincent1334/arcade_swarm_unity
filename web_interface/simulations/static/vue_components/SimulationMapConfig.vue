@@ -3,7 +3,7 @@
         <div class="card-content">
             <span class="card-title"> Simulation Map </span>
 
-            <input type="hidden" name="borders" :value="JSON.stringify(bounds)">
+            <input type="hidden" name="borders" id = "borders" :value="JSON.stringify(bounds)">
 
             <div id="map" class="google_map">
             </div>

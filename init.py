@@ -58,7 +58,7 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
     sim.log_setup(directory)
     sim_instances[sim_net_id] = sim
 
-    await ws.send(json.dumps({"operation": "start"}))
+    await ws.send(json.dumps({"operation": "start", "timesteps": 100}))
     arcade.run()
 
     while True:

@@ -63,6 +63,11 @@ export class MAP {
                 add_drag_listener();
             }
 
+            map.drawing_manager.setOptions({
+                drawingControl: false
+            });
+            map.drawing_manager.setDrawingMode(null);
+
         });
 
         function add_drag_listener(){
