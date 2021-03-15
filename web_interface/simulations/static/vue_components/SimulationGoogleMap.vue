@@ -309,7 +309,6 @@
 
             async play(){
                 let req;
-
                 for( var i = 1; i <= 0; i++ ){
                     if(!this.game_done) {
                         req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);

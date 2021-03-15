@@ -20,17 +20,46 @@ import functools
 
 EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
-async def threaded_client(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
                          INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
                          operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
                          communication_noise, alpha, normal_command, command_period, constant_repulsion,
                          operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
                          aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
                          positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
-    reply = ''
+    current_ws = ws    
+    sim_net_id = reply["id"]
+    GRID_X = reply["config"]["width"]
+    GRID_Y = reply["config"]["height"]
+    SWARM_SIZE = reply["config"]["drones"]
+    
+    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
+                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
+    sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
+                reliability_2, unreliability_percentage, moving_disaster, communication_noise,
+                alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
+                communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+                aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength,
+                communication_noise_prob, positioning_noise_strength, positioning_noise_prob,
+                sensing_noise_strength, sensing_noise_prob, sim_net_id)
+    
+    if not os.path.isdir('outputs'):
+        os.mkdir('outputs')
+    if (not os.path.isdir('outputs/' + name_of_experiment)):
+        os.mkdir('outputs/' + name_of_experiment)
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
 
-    current_ws = ws
-    await current_ws.send("test")
+    sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    directory = sim.directory
+    sim.log_setup(directory)
+    sim_instances[sim_net_id] = sim
+
+    print("you made it!")
+    arcade.run()
+    
 
     # data = conn.recv(2048)
     # p = HttpParser()
@@ -112,25 +141,6 @@ async def threaded_client(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_
     #         print("Connection Closed")
     #         conn.close()
 
-def thread_handler(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
-                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
-                         operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
-                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
-                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
-                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
-                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    loop.run_until_complete(threaded_client(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
-                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
-                         operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
-                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
-                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
-                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
-                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob))
-    loop.close()
-
 
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
 # Could be used with different swarm sizes, reliability ranges and percentages, and communication noise
@@ -144,10 +154,10 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
     clients = {}
     async def start_listen(websocket, path, name_of_experiment):
         jsondata = await websocket.recv()
-        data = json.loads(jsondata)
+        reply = json.loads(jsondata)
 
-        if data['operation'] == 'start':
-            clients[data['id']] = websocket
+        if reply['operation'] == 'start':
+            clients[reply['id']] = websocket
 
             print(clients)
 
@@ -155,15 +165,13 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
             if name_of_experiment == EXP_D_T:
                 name_of_experiment = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
-            Thread(target=thread_handler,
-                args=(websocket, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+            await threaded_client(reply, websocket, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
                         operator_location,reliability[0], reliability[1], unreliability_percentage, moving_disaster,
                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)
-                ).start()
 
         else:
             print(data)
