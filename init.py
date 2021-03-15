@@ -12,12 +12,15 @@ from http_parser.parser import HttpParser
 from datetime import datetime
 import simulation
 from arcade import set_window, run, close_window
+import asyncio
+import websockets
+import functools
 # import cProfile
 
 
 EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
-def threaded_client(conn, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+async def threaded_client(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
                          INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
                          operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
                          communication_noise, alpha, normal_command, command_period, constant_repulsion,
@@ -25,85 +28,109 @@ def threaded_client(conn, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_expe
                          aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
                          positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
     reply = ''
-    
-    data = conn.recv(2048)
-    p = HttpParser()
-    if not data:
-        conn.send(str.encode("END!"))
-    else:
-        r_len = len(data)
-        p.execute(data, r_len)
-        reply = json.loads(p.recv_body())
-        if reply["operation"] == "start": # In case a user initiate a game on web-application
-            sim_net_id = reply["id"]
-            GRID_X = reply["config"]["width"]
-            GRID_Y = reply["config"]["height"]
-            SWARM_SIZE = reply["config"]["drones"]
 
-            sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
-                                            SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
-            sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
-                        reliability_2, unreliability_percentage, moving_disaster, communication_noise, 
-                        alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
-                        communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
-                        aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength,
-                        communication_noise_prob, positioning_noise_strength, positioning_noise_prob, 
-                        sensing_noise_strength, sensing_noise_prob, sim_net_id)
+    current_ws = ws
+    await current_ws.send("test")
 
-            if not os.path.isdir('outputs'):
-                os.mkdir('outputs')
-            if (not os.path.isdir('outputs/' + name_of_experiment)):
-                os.mkdir('outputs/' + name_of_experiment)
-            if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
-                os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
-            if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
-                os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
+    # data = conn.recv(2048)
+    # p = HttpParser()
+    # if not data:
+    #     conn.send(str.encode("END!"))
+    # else:
+    #     r_len = len(data)
+    #     p.execute(data, r_len)
+    #     print(data)
+    #     reply = json.loads(p.recv_body())
+    #     if reply["operation"] == "start": # In case a user initiate a game on web-application
+    #         sim_net_id = reply["id"]
+    #         GRID_X = reply["config"]["width"]
+    #         GRID_Y = reply["config"]["height"]
+    #         SWARM_SIZE = reply["config"]["drones"]
+    #
+    #         sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
+    #                                         SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
+    #         sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
+    #                     reliability_2, unreliability_percentage, moving_disaster, communication_noise,
+    #                     alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
+    #                     communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+    #                     aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength,
+    #                     communication_noise_prob, positioning_noise_strength, positioning_noise_prob,
+    #                     sensing_noise_strength, sensing_noise_prob, sim_net_id)
+    #
+    #         if not os.path.isdir('outputs'):
+    #             os.mkdir('outputs')
+    #         if (not os.path.isdir('outputs/' + name_of_experiment)):
+    #             os.mkdir('outputs/' + name_of_experiment)
+    #         if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
+    #             os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    #         if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
+    #             os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
+    #
+    #         sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    #         directory = sim.directory
+    #         sim.log_setup(directory)
+    #         sim_instances[sim_net_id] = sim
+    #         reply = {"id": sim_net_id}
+    #         reply = json.dumps(reply)
+    #         http_reply = "HTTP/1.1 200 OK\n" \
+    #                     "Content-Type: text/html\n" \
+    #                     "\n" \
+    #                     f"{str(reply)}\n"
+    #         conn.sendall(http_reply.encode())
+    #         print("Connection Closed")
+    #         conn.close()
+    #         Thread(target=arcade.run())
+    #
+    #     elif reply["operation"] == "update":
+    #         instance_id = reply["id"]
+    #         x_change = reply["location"][0]
+    #         y_change = reply["location"][1]
+    #         instance = sim_instances[instance_id]
+    #
+    #         if reply["type"] == "attract":
+    #             instance.network_command("attract", x_change, y_change)
+    #         elif reply["type"] == "deflect":
+    #             instance.network_command("deflect", x_change, y_change)
+    #
+    #         http_reply = "HTTP/1.1 200 OK\n" \
+    #                     "Content-Type: text/html\n" \
+    #                     "\n" \
+    #                     "Done!\n"
+    #         conn.sendall(http_reply.encode())
+    #         print("Connection Closed")
+    #         conn.close()
+    #
+    #     elif reply["operation"] == "close":
+    #         instance_id = reply["id"]
+    #         set_window(sim_instances[instance_id])
+    #         arcade.close_window()
+    #         http_reply = "HTTP/1.1 200 OK\n" \
+    #                     "Content-Type: text/html\n" \
+    #                     "\n" \
+    #                     "Done!\n"
+    #         conn.sendall(http_reply.encode())
+    #         print("Connection Closed")
+    #         conn.close()
 
-            sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
-            directory = sim.directory
-            sim.log_setup(directory)
-            sim_instances[sim_net_id] = sim
-            reply = {"id": sim_net_id}
-            reply = json.dumps(reply)
-            http_reply = "HTTP/1.1 200 OK\n" \
-                        "Content-Type: text/html\n" \
-                        "\n" \
-                        f"{str(reply)}\n"
-            conn.sendall(http_reply.encode())
-            print("Connection Closed")
-            conn.close()
-            Thread(target=arcade.run())
-            
-        elif reply["operation"] == "update":
-            instance_id = reply["id"]
-            x_change = reply["location"][0]
-            y_change = reply["location"][1]
-            instance = sim_instances[instance_id]
-            
-            if reply["type"] == "attract":
-                instance.network_command("attract", x_change, y_change)    
-            elif reply["type"] == "deflect":
-                instance.network_command("deflect", x_change, y_change)
+def thread_handler(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
+                         operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
+                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
+                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
+                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
-            http_reply = "HTTP/1.1 200 OK\n" \
-                        "Content-Type: text/html\n" \
-                        "\n" \
-                        "Done!\n"
-            conn.sendall(http_reply.encode())
-            print("Connection Closed")
-            conn.close()
+    loop.run_until_complete(threaded_client(ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
+                         operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
+                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
+                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
+                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob))
+    loop.close()
 
-        elif reply["operation"] == "close":
-            instance_id = reply["id"]
-            set_window(sim_instances[instance_id])
-            arcade.close_window()
-            http_reply = "HTTP/1.1 200 OK\n" \
-                        "Content-Type: text/html\n" \
-                        "\n" \
-                        "Done!\n"
-            conn.sendall(http_reply.encode())
-            print("Connection Closed")
-            conn.close()
 
 # Simply collects the belief error and the confidence of the swarm at each 5 steps
 # Could be used with different swarm sizes, reliability ranges and percentages, and communication noise
@@ -113,29 +140,23 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,
                gp = False, gp_step = 50, maze = None, through_walls = True, communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0,
                positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0, online_exp = None):
-    
-    if online_exp is not None: # In case we have an online experience
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server = 'localhost'
-        port = 5555
-        server_ip = socket.gethostbyname(server)
-        
-        try:
-            s.bind((server, port))
-        except socket.error as e:
-            print(str(e))
-        
-        s.listen(50)
-        print("Awaiting a connection")
-        
-        sim_instances = {}
-        while True:            
-            conn, addr = s.accept()
-            print("Connected to: ", addr)
+
+    clients = {}
+    async def start_listen(websocket, path, name_of_experiment):
+        jsondata = await websocket.recv()
+        data = json.loads(jsondata)
+
+        if data['operation'] == 'start':
+            clients[data['id']] = websocket
+
+            print(clients)
+
+            sim_instances = {}
             if name_of_experiment == EXP_D_T:
                 name_of_experiment = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-            Thread(target=threaded_client,
-                args=(conn, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
+
+            Thread(target=thread_handler,
+                args=(websocket, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
                         operator_location,reliability[0], reliability[1], unreliability_percentage, moving_disaster,
                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
@@ -143,6 +164,17 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
                         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)
                 ).start()
+
+        else:
+            print(data)
+
+
+    if online_exp is not None: # In case we have an online experience
+        print("start web socket server")
+        start_server = websockets.serve(functools.partial(start_listen, name_of_experiment=name_of_experiment), "localhost", 8765)
+
+        asyncio.get_event_loop().run_until_complete(start_server)
+        asyncio.get_event_loop().run_forever()
 
     else:
         sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)

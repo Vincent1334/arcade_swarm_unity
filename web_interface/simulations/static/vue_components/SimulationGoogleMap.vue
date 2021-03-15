@@ -3,6 +3,8 @@
         <div class="card-content">
             <span class="card-title"> Simulation Map </span>
 
+            <h1>{{ current_timestep }}</h1>
+
             <div id="map" class="google_map" style="height: 800px;">
             </div>
         </div>
@@ -27,6 +29,9 @@
                 center_long:0,
                 rectangles:[],
                 cookie: this.getCookie('swarm_southampton_cookie'),
+                current_timestep:0,
+
+                socket: null,
             }
         },
         methods:{
@@ -73,10 +78,16 @@
             },
 
             // send data
-            SEND( data, url ){
+            SEND( data, url, headers = null ){
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", url, true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
+                if(headers === null){
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                }else{
+                    Object.keys(headers).forEach((key) => {
+                        xhr.setRequestHeader(key, headers[key]);
+                    });
+                }
                 xhr.send(JSON.stringify(data));
             },
 
@@ -115,6 +126,8 @@
                 this.createInitialGrid(null);
                 this.add_listeners();
 
+                this.set_socket();
+
                 await this.play();
             },
 
@@ -145,6 +158,56 @@
                     this.map_zoom = this.map.map.getZoom();
                 });
 
+            },
+
+            set_socket(){
+                let app = this;
+                this.socket = new WebSocket('ws://localhost:8765');
+                let data = {
+                    "id": this.simulation.id,
+                    "operation": "start",
+                    "config":{
+                        "drones": this.simulation.drones,
+                        "width": this.simulation.width,
+                        "height": this.simulation.height,
+                    }
+                };
+
+                 this.socket.onmessage = function (event) {
+                    console.log(event.data);
+                    this.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
+                };
+
+                this.socket.onopen = function(event){
+                    app.socket.send(JSON.stringify(data));
+                }
+
+                // let headers = {'Content-type': 'application/json', 'Accept': 'application/json'};
+                // this.SEND(data, 'http://localhost:5555', headers);
+
+                // var socket = io('ws://localhost:5555');
+                // Vue.use(VueSocketIOExt, socket);
+                // socket.send('test')
+
+                // io.on('http://localhost:5555', (socket) => {
+                //     socket.broadcast.emit('test');
+                // });
+                // socket.on("connect", () => {
+                //     // either with send()
+                //     socket.send('test');
+                // });
+                //
+                // socket.on("message", data => {
+                //   console.log(data);
+                // });
+
+                // let ws = io("ws://localhost:8765/", {
+                //     cors:{
+                //         origin:'http://localhost:8000',
+                //         methods: ["GET", "POST"],
+                //
+                //     }
+                // });
             },
 
             // map processing
@@ -236,8 +299,9 @@
             async play(){
                 let req;
 
-                for( var i = 1; i <= 1000; i++ ){
-                    req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 1000, 10);
+                for( var i = 1; i <= 0; i++ ){
+                    req = await this.GET(`/api/v1/simulations/${this.simulation.id}/timestep/${i}`, 100, 100);
+                    this.current_timestep = i;
 
                     if( req[0] !== undefined ) {
                         let data = JSON.parse(req[0].config.replaceAll("\'", "\""));
