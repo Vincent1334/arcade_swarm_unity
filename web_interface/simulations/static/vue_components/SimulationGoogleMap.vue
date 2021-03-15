@@ -132,11 +132,13 @@
             // send operator action
             send_operator_action(action_name, row, col){
                 let json_data = {
+                    "id": this.simulation.id,
+                    "operation": "update",
                     "action": action_name,
                     "pos": [row, col],
                 };
 
-                this.SEND( json_data, `/api/v1/simulations/${this.simulation.id}/add_action/` );
+                this.socket.send(JSON.stringify(json_data));
             },
 
             // send statistics data
@@ -212,8 +214,16 @@
                 };
 
                  this.socket.onmessage = function (event) {
-                    console.log(event.data);
-                    app.socket.send(JSON.stringify({"id": this.simulation.id, "operation":"test"}))
+                    let resp = JSON.parse(event.data);
+
+                    console.log(resp);
+
+                     if(resp.operation === "start"){
+                         // app.start_game();
+                     }else if(resp.operation === "get_data"){
+                         // handle data update
+                         console.log(resp);
+                     }
                 };
 
                 this.socket.onopen = function(event){

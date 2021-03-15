@@ -12,7 +12,7 @@ import pyglet
 import requests
 from fps_test_modules import FPSCounter
 import time as timeclock
-
+import asyncio
 
 '''
 Class Object (abstract class)
@@ -678,7 +678,7 @@ class Drone(Agent):
 '''
 class SwarmSimulator(arcade.Window):
     
-    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp): 
+    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp):
         
         self.ARENA_TITLE = ARENA_TITLE
         self.ARENA_WIDTH = ARENA_WIDTH
@@ -718,7 +718,10 @@ class SwarmSimulator(arcade.Window):
         self.fps = FPSCounter()
         
         # Open file to save timings
-        self.results_file = None  
+        self.results_file = None
+
+        # websocket
+        self.ws = None
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -967,7 +970,10 @@ class SwarmSimulator(arcade.Window):
 
         # Open file to save timings
         self.results_file = open(self.directory + '/performance_test/' + 'stress_test_results.csv', "w")
- 
+
+    def websocket_setup(self, ws):
+        self.ws = ws
+
     def get_current_drones_positions(self):        
         positions = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
         
@@ -1284,8 +1290,8 @@ class SwarmSimulator(arcade.Window):
                     self.drawing_time_list.append(self.draw_time)
 
         if self.online_exp is not None:
-            self.send_data(self.operator_list[0]) # Sending maps to web-api for game interface
-        
+            self.send_data(self.operator_list[0])# Sending maps to web-api for game interface
+
         
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
@@ -1528,10 +1534,9 @@ class SwarmSimulator(arcade.Window):
         
     def send_data(self, operator):
         """
-        Send simulation information to web API
+        Send simulation information to web via websocket
         :return: Json object
         """
-        api_server = 'http://localhost:8000'
         conf_map_ls = operator.confidence_map.tolist()
         belief_map_ls = operator.internal_map.tolist()
 
@@ -1543,7 +1548,8 @@ class SwarmSimulator(arcade.Window):
             },
         }
 
-        r = requests.post(api_server + '/api/v1/simulations/' + self.sim_net_id + '/timestep/' + str(self.timer), json=data)
+        print(self.ws)
+        # r = requests.post(api_server + '/api/v1/simulations/' + self.sim_net_id + '/timestep/' + str(self.timer), json=data)
 
 
     def network_command(self, operation, x=0, y=0):
