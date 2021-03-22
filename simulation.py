@@ -1,4 +1,5 @@
 import arcade
+from threading import *
 import numpy as np
 import random
 import math
@@ -687,11 +688,11 @@ class SwarmSimulator(arcade.Window):
         self.SWARM_SIZE = SWARM_SIZE        
         
         self.INPUT_TIME = INPUT_TIME
-        self.run_time = RUN_TIME 
         self.GRANULARITY = 10
         self.GRID_X = GRID_X #int(ARENA_WIDTH / GRANULARITY)
         self.GRID_Y = GRID_Y #nt(ARENA_HEIGHT / GRANULARITY)
         
+        self.run_time = RUN_TIME
         self.global_map = None
         
         self.swarm_confidence = []
@@ -719,9 +720,6 @@ class SwarmSimulator(arcade.Window):
         
         # Open file to save timings
         self.results_file = None
-
-        # websocket
-        self.ws = None
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -970,9 +968,6 @@ class SwarmSimulator(arcade.Window):
 
         # Open file to save timings
         self.results_file = open(self.directory + '/performance_test/' + 'stress_test_results.csv', "w")
-
-    def websocket_setup(self, ws):
-        self.ws = ws
 
     def get_current_drones_positions(self):        
         positions = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
@@ -1560,7 +1555,5 @@ class SwarmSimulator(arcade.Window):
         elif operation == "deflect":
             for drone in self.drone_list:
                 drone.confidence_map[x][y] = 1
-        elif operation == "close":
-            arcade.close_window()
         else:
             print("Operation not defined!")

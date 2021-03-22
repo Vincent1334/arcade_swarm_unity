@@ -1,7 +1,8 @@
 import sys
 import os
 import ast
-from threading import Thread
+from threading import Thread, current_thread
+from subprocess import Popen, PIPE
 import socket
 import arcade
 import argparse
@@ -15,6 +16,7 @@ from arcade import set_window, run, close_window
 import asyncio
 import websockets
 import functools
+from run import trim_cmd
 # import cProfile
 
 
@@ -28,40 +30,18 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
                          aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
                          positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
 
-    sim_net_id = reply["id"]
-    GRID_X = reply["config"]["width"]
-    GRID_Y = reply["config"]["height"]
-    SWARM_SIZE = reply["config"]["drones"]
-    
-    sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
-                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
-    sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
-                reliability_2, unreliability_percentage, moving_disaster, communication_noise,
-                alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
-                communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
-                aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength,
-                communication_noise_prob, positioning_noise_strength, positioning_noise_prob,
-                sensing_noise_strength, sensing_noise_prob, sim_net_id)
-    sim.websocket_setup(ws)
-
-    if not os.path.isdir('outputs'):
-        os.mkdir('outputs')
-    if (not os.path.isdir('outputs/' + name_of_experiment)):
-        os.mkdir('outputs/' + name_of_experiment)
-    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
-        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
-    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
-        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
-
-    sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
-    directory = sim.directory
-    sim.log_setup(directory)
-    sim_instances[sim_net_id] = sim
-
     await ws.send(json.dumps({"operation": "start", "timesteps": run_time}))
-    arcade.run()
+
+    sim_id = reply['id']
+    process = Popen([sys.executable, "online_init.py"] 
+                    + trim_cmd(" -sim_id " + str(sim_id) + " -width " + str(ARENA_WIDTH) + " -height " + str(ARENA_HEIGHT) \
+                               + " -name " + name_of_experiment + " -size " + str(SWARM_SIZE) + " -run_time " + str(run_time) \
+                               + " -input_time " + str(INPUT_TIME) + " -alpha " + str(alpha) + " -hum_r " + str(operator_vision_radius) \
+                               + " -vis_range " + str(vision_range) + " -comm_range " + str(communication_range)), stdin=PIPE, stdout=PIPE)
+    sim_instances[sim_id] = process
+    
     # the map to get the score from
-    print(sim.operator_list[0].confidence_map)
+    # print(sim.operator_list[0].confidence_map)
     await ws.send(json.dumps({"operation": "close", "score": 0}))
 
     while True:
@@ -69,25 +49,23 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
             message = await ws.recv()
             print('Received message from server: ' + str(message))
             message_data = json.loads(message)
-
+            
             if message_data["operation"] == "update":
-                instance_id = message_data["id"]
                 x_change = message_data["pos"][0]
                 y_change = message_data["pos"][1]
-                instance = sim_instances[instance_id]
-
+                instance = sim_instances[sim_id]
+                
                 if message_data["action"] == "attract":
-                    instance.network_command("attract", x_change, y_change)
+                    instance.stdin.flush()
+                    instance.stdin.write('{} {} {}'.format("attract", str(x_change), str(y_change)).encode())
                 elif message_data["action"] == "deflect":
-                    instance.network_command("deflect", x_change, y_change)
-
+                    instance.stdin.flush()
+                    instance.stdin.write('{} {} {}'.format("deflect", str(x_change), str(y_change)).encode())  
             elif message_data["operation"] == "close":
-                instance_id = message_data["id"]
-                set_window(sim_instances[instance_id])
-                arcade.close_window()
-
-                # maybe closing needs to be changed
-
+                instance = sim_instances[sim_id]
+                instance.stdin.flush()
+                instance.stdin.write('close'.encode())
+                break
         except websockets.exceptions.ConnectionClosed:
             print('Connection with server closed')
             break
@@ -156,6 +134,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         directory = sim.directory
             
         sim.log_setup(directory)   
+        print("Current Thread: {}".format(current_thread()))
         arcade.run()              
         # cProfile.run('arcade.run()')    
         

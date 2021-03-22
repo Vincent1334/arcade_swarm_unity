@@ -163,11 +163,11 @@ def bottleneck_tests(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_range
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
     return cmds
 
-def online_experiment(swarm_size = 40, r = 40, alpha = 0.99, t = 300, comm_range = 1, online_exp = "Normal_Network", ex_time = 200):
+def online_experiment(swarm_size = 25, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 50, online_exp = "Normal_Network", ex_time = 500):
     cmds = []  
     for exp_num in range(1):
-        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
-                    + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -online_exp ' + str(online_exp) + ' -run_time ' + str(ex_time))
+        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -online_exp ' + str(online_exp) + ' -run_time ' + str(ex_time) \
+                    + ' -alpha ' + str(alpha) + ' -hum_r ' + str(r) + ' -vis_range ' + str(vs_range) + ' -comm_range ' + str(comm_range))
     return cmds
     
 def accuracy_diag(swarm_size = 10, r = 40, alpha = 0.99, t = 300, comm_range = 0):
