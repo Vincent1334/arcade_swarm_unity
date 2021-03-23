@@ -33,7 +33,7 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
     await ws.send(json.dumps({"operation": "start", "timesteps": run_time}))
 
     sim_id = reply['id']
-    process = Popen([sys.executable, "online_init.py"] 
+    process = Popen([sys.executable, "simulation.py"] 
                     + trim_cmd(" -sim_id " + str(sim_id) + " -width " + str(ARENA_WIDTH) + " -height " + str(ARENA_HEIGHT) \
                                + " -name " + name_of_experiment + " -size " + str(SWARM_SIZE) + " -run_time " + str(run_time) \
                                + " -input_time " + str(INPUT_TIME) + " -alpha " + str(alpha) + " -hum_r " + str(operator_vision_radius) \

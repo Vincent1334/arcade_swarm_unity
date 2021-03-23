@@ -2,6 +2,7 @@ import arcade
 from threading import *
 import numpy as np
 import random
+import scipy, scipy.ndimage
 import math
 import time
 from matplotlib import pyplot as plt
@@ -13,7 +14,11 @@ import pyglet
 import requests
 from fps_test_modules import FPSCounter
 import time as timeclock
-import asyncio
+import datetime
+import argparse
+
+
+EXP_D_T = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
 '''
 Class Object (abstract class)
@@ -677,6 +682,23 @@ class Drone(Agent):
 '''
     Drone swarm Simulator
 '''
+
+def listener(sim):
+    while True:
+        r = input()
+
+        if r == 'close':
+            arcade.close_window()
+            break
+        else:
+            r = r.split(',')
+            if r[0] == 'attract':
+                sim.network_command("attract", int(r[1]), int(r[2]))
+            elif r[0] == 'deflect':
+                sim.network_command("deflect", int(r[1]), int(r[2]))
+            else:
+                print("Wrong Command!")
+    
 class SwarmSimulator(arcade.Window):
     
     def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp):
@@ -1075,9 +1097,12 @@ class SwarmSimulator(arcade.Window):
                  distances.append(int(math.sqrt(dx*dx + dy*dy)))
 
          return collections.Counter(distances)
-        
                   
     def update(self, interval):
+        if self.timer == 0:
+            if self.online_exp is not None:
+                Thread(target=listener, args=[self]).start()
+            
         if self.timer >= self.run_time:
              arcade.close_window()
              
@@ -1103,6 +1128,10 @@ class SwarmSimulator(arcade.Window):
                  w.writerow(self.drone_distances.values())
              '''
 
+        if self.online_exp is not None:
+            # Sending maps to web-api for game interface
+                self.send_data(self.operator_list[0])
+        
         # Start update timer
         start_time = timeit.default_timer()
 
@@ -1283,11 +1312,6 @@ class SwarmSimulator(arcade.Window):
                     self.fps_list.append(round(self.fps.get_fps(), 1))
                     self.processing_time_list.append(self.processing_time)
                     self.drawing_time_list.append(self.draw_time)
-
-        if self.online_exp is not None:
-            # Sending maps to web-api for game interface
-            self.send_data(self.operator_list[0])
-
         
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
@@ -1500,7 +1524,35 @@ class SwarmSimulator(arcade.Window):
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_RIGHT:
-            print("right mouse clicked")
+            
+            # def find_nbs(matrix, indices):
+                
+            #     matrix = np.array(matrix)
+            #     indices = tuple(np.transpose(np.atleast_2d(indices)))
+            #     arr_shape = np.shape(matrix)
+                
+            #     dist = np.ones(arr_shape)
+            #     dist[indices] = 0
+            #     dist = scipy.ndimage.distance_transform_cdt(dist, metric='chessboard')
+                
+            #     nb_indexes = np.transpose(np.nonzero(dist == 1))
+                
+            #     return nb_indexes
+            
+            # j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
+            # i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
+            
+            # nbs = find_nbs(self.operator_list[0].confidence_map, [i, j])
+            
+            # for node in nbs:
+            #     a = node[0]
+            #     b = node[1]
+            #     self.operator_list[0].confidence_map[a][b] += 1
+            # self.operator_list[0].confidence_map[i][j] += 1
+            
+            # print("right mouse clicked: {},{} --> {},{}".format(str(x), str(y), str(i), str(j)))
+            # print(self.operator_list[0].confidence_map[i][j])
+            
             selected_drone=None
 
             for drone in self.drone_list:
@@ -1527,6 +1579,14 @@ class SwarmSimulator(arcade.Window):
 
         self.draw_time = timeit.default_timer() - draw_start_time
         self.fps.tick()
+        arcade.draw_text("Timestep: {}".format(self.timer), self.ARENA_WIDTH/2,
+                         self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
+        if self.online_exp is not None:
+            arcade.draw_text("Online", self.ARENA_WIDTH/2,
+                         self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+        else:
+            arcade.draw_text("Stand-alone", self.ARENA_WIDTH/2,
+                         self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
         
     def send_data(self, operator):
         """
@@ -1546,14 +1606,153 @@ class SwarmSimulator(arcade.Window):
         }
 
         r = requests.post(api_server + '/api/v1/simulations/' + self.sim_net_id + '/timestep/' + str(self.timer), json=data)
+        
+        return r.status_code
 
 
     def network_command(self, operation, x=0, y=0):
+        
+        def find_nbs(matrix, indices):
+            
+            matrix = np.array(matrix)
+            indices = tuple(np.transpose(np.atleast_2d(indices)))
+            arr_shape = np.shape(matrix)
+            
+            dist = np.ones(arr_shape)
+            dist[indices] = 0
+            dist = scipy.ndimage.distance_transform_cdt(dist, metric='chessboard')
+            
+            nb_indexes = np.transpose(np.nonzero(dist == 1))
+            
+            return nb_indexes
+        
         if operation == "attract":
-            for drone in self.drone_list:
-                drone.confidence_map[x][y] = 0
+            nbs = find_nbs(self.operator_list[0].confidence_map, [x, y])
+            for node in nbs:
+                a = node[0]
+                b = node[1]
+                self.operator_list[0].confidence_map[a][b] -= 1
+            self.operator_list[0].confidence_map[x][y] -= 1
         elif operation == "deflect":
-            for drone in self.drone_list:
-                drone.confidence_map[x][y] = 1
+            nbs = find_nbs(self.operator_list[0].confidence_map, [x, y])
+            for node in nbs:
+                a = node[0]
+                b = node[1]
+                self.operator_list[0].confidence_map[a][b] += 1
+            self.operator_list[0].confidence_map[x][y] += 1
         else:
             print("Operation not defined!")
+
+def merge(list1, list2):       
+    merged_list = [] 
+    for i in range(max((len(list1), len(list2)))):   
+        while True: 
+            try: 
+                tup = (list1[i], list2[i]) 
+            except IndexError: 
+                if len(list1) > len(list2): 
+                    list2.append('') 
+                    tup = (list1[i], list2[i]) 
+                elif len(list1) < len(list2): 
+                    list1.append('') 
+                    tup = (list1[i], list2[i]) 
+                continue  
+            merged_list.append(tup) 
+            break
+    return merged_list 
+
+def main(SIM_ID, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_time,
+         INPUT_TIME, GRID_X, GRID_Y, disaster_size, disaster_location, operator_size,
+         operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
+         communication_noise, alpha, normal_command, command_period, constant_repulsion,
+         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+         aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
+         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
+
+    sim_net_id = SIM_ID
+
+    sim = SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
+                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, "Normal_Network")
+    sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
+                reliability_2, unreliability_percentage, moving_disaster, communication_noise,
+                alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
+                communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
+                aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength,
+                communication_noise_prob, positioning_noise_strength, positioning_noise_prob,
+                sensing_noise_strength, sensing_noise_prob, sim_net_id)
+
+    if not os.path.isdir('outputs'):
+        os.mkdir('outputs')
+    if (not os.path.isdir('outputs/' + name_of_experiment)):
+        os.mkdir('outputs/' + name_of_experiment)
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    if (not os.path.isdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')):
+        os.mkdir('outputs/' + name_of_experiment + "/" + str(EXP_D_T) + '/performance_test')
+
+    sim.directory = str('outputs/' + name_of_experiment + "/" + str(EXP_D_T))
+    directory = sim.directory
+    sim.log_setup(directory)
+    
+    arcade.run()
+            
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-size', type = int, default = 15) #swarm_size
+    parser.add_argument('-name', type = str, default = "General") #experiment_name
+    parser.add_argument('-d_size', type=int, default = 1)
+    parser.add_argument('-d_xs', nargs='+', type=int, default = [500])
+    parser.add_argument('-d_ys', nargs='+', type=int, default = [500])
+    parser.add_argument('-d_move', type = bool, default = False)#moving disaster
+    parser.add_argument('-op_size', type=int, default = 1)
+    parser.add_argument('-op_xs', nargs='+', type=int, default = [450])
+    parser.add_argument('-op_ys', nargs='+', type=int, default = [300])
+    parser.add_argument('-noise', type = int, default = 0) #communication_noise
+    parser.add_argument('-r_min', type = int, default = 100) #min_reliability
+    parser.add_argument('-r_max', type = int, default = 100) #max_reliability
+    parser.add_argument('-r_perc', type = int, default = 0) #unreliability_percentage
+    parser.add_argument('-cmd', type = str, default = None) #normal_command
+    parser.add_argument('-cmd_t', type = int, default = 0) #command_period
+    parser.add_argument('-const_repel', type = bool, default = False) #constant_repulsion
+    parser.add_argument('-alpha', type = float, default = 10) #command strength
+    parser.add_argument('-comm_range', type = int, default = 4) #communication_range
+    parser.add_argument('-vis_range', type = int, default = 2) #vision_range
+    parser.add_argument('-w', type = float, default = 0.01) #velocity_weight_coef
+    parser.add_argument('-bound', type = float, default = 1) #boundary_repulsion
+    parser.add_argument('-aging', type = float, default = 0.9999) #boundary_repulsion
+    parser.add_argument('-hum_r', type = int, default = 100)#operator_vision_radius    
+    parser.add_argument('-height', type = int, default = 600) #arena_height
+    parser.add_argument('-width', type = int, default = 600) #arena_width
+    parser.add_argument('-grid_x', type = int, default = 40) #grid_x
+    parser.add_argument('-grid_y', type = int, default = 40) #grid_y
+    parser.add_argument('-input_time', type = int, default = 300) #input_time
+    parser.add_argument('-gp', type = bool, default = False) #gaussian processes
+    parser.add_argument('-gp_step', type = int, default = 50) #gaussian processes step
+    parser.add_argument('-maze', type = str, default = None) #maze
+    parser.add_argument('-walls', type = bool, default = False) #communication through walls
+    parser.add_argument('-run_time', type = int, default = 1000) #communication through walls
+    parser.add_argument('-communication_noise_strength', type = float, default = 0) 
+    parser.add_argument('-communication_noise_prob', type = float, default = 0) # comm rate
+    parser.add_argument('-positioning_noise_strength', type = float, default = 0) 
+    parser.add_argument('-positioning_noise_prob', type = float, default = 0) 
+    parser.add_argument('-sensing_noise_strength', type = float, default = 0) 
+    parser.add_argument('-sensing_noise_prob', type = float, default = 0) 
+    parser.add_argument('-sim_id', type = str, default = "0") 
+
+    args = parser.parse_args()
+    
+    disasters_locations = merge(args.d_xs, args.d_ys)
+    operators_locations = merge(args.op_xs, args.op_ys)
+    
+    if args.d_size > len(args.d_xs):
+        disasters_locations += [('random', 'random')]*(args.d_size - len(args.d_xs))
+        
+    if args.op_size > len(args.op_xs):
+        operators_locations += [('random', 'random')]*(args.op_size - len(args.op_xs))
+
+    main(args.sim_id, args.width, args.height, args.name, args.size, args.run_time, args.input_time, args.grid_x, args.grid_y, args.d_size, 
+         disasters_locations, args.op_size, operators_locations, args.r_min, args.r_max, args.r_perc, args.d_move, 
+         args.noise, args.alpha, args.cmd, args.cmd_t, args.const_repel, args.hum_r, args.comm_range, args.vis_range, args.w, 
+         args.bound, args.aging, args.gp, args.gp_step, args.maze, args.walls, args.communication_noise_strength, args.communication_noise_prob,
+         args.positioning_noise_strength, args.positioning_noise_prob, args.sensing_noise_strength, args.sensing_noise_prob)
