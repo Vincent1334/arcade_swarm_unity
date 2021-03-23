@@ -57,16 +57,22 @@ async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, n
                 
                 if message_data["action"] == "attract":
                     instance.stdin.flush()
-                    instance.stdin.write('{} {} {}'.format("attract", str(x_change), str(y_change)).encode())
+                    cmd = '{},{},{}\n'.format("attract", str(x_change), str(y_change))
+                    instance.stdin.write(cmd.encode())
                 elif message_data["action"] == "deflect":
                     instance.stdin.flush()
-                    instance.stdin.write('{} {} {}'.format("deflect", str(x_change), str(y_change)).encode())  
+                    cmd = '{},{},{}\n'.format("deflect", str(x_change), str(y_change))
+                    instance.stdin.write(cmd.encode())  
             elif message_data["operation"] == "close":
                 instance = sim_instances[sim_id]
                 instance.stdin.flush()
-                instance.stdin.write('close'.encode())
+                instance.stdin.write('close\n'.encode())
                 break
         except websockets.exceptions.ConnectionClosed:
+            instance = sim_instances[sim_id]
+            instance.stdin.flush()
+            instance.stdin.write('close\n'.encode())
+            process.terminate()
             print('Connection with server closed')
             break
 

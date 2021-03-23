@@ -1,5 +1,5 @@
 import os
-from threading import Thread
+import multiprocessing
 import argparse
 import datetime
 import arcade
@@ -42,16 +42,18 @@ def main(SIM_ID, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_
     directory = sim.directory
     sim.log_setup(directory)
     
-    Thread(target=arcade.run()).start()
+    proc = multiprocessing.Process(target=arcade.run())
+    proc.start()
     
     while True:
         r = input()
-        
+
         if r == 'close':
             arcade.close_window()
+            proc.terminate()
             break
         else:
-            r = r.split()
+            r = r.split(',')
             if r[0] == 'attract':
                 sim.network_command("attract", int(r[1]), int(r[2]))
             elif r[0] == 'deflect':
