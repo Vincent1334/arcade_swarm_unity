@@ -493,7 +493,7 @@ class Drone(Agent):
         threshold = 0.5
         # radius = self.simulation.BOUDARY_DIAMETER
         
-        #Examine neigbourhood only
+        # Examine neigbourhood only
         
         for i in range(self.internal_map.shape[0]):
           for j in range(self.internal_map.shape[1]):
@@ -698,10 +698,24 @@ def listener(sim):
                 sim.network_command("deflect", int(r[1]), int(r[2]))
             else:
                 print("Wrong Command!")
+
+def find_nbs(matrix, indices):
+    
+    matrix = np.array(matrix)
+    indices = tuple(np.transpose(np.atleast_2d(indices)))
+    arr_shape = np.shape(matrix)
+    
+    dist = np.ones(arr_shape)
+    dist[indices] = 0
+    dist = scipy.ndimage.distance_transform_cdt(dist, metric='chessboard')
+    
+    nb_indexes = np.transpose(np.nonzero(dist == 1))
+    
+    return nb_indexes
     
 class SwarmSimulator(arcade.Window):
     
-    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, online_exp):
+    def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, exp_type):
         
         self.ARENA_TITLE = ARENA_TITLE
         self.ARENA_WIDTH = ARENA_WIDTH
@@ -727,7 +741,7 @@ class SwarmSimulator(arcade.Window):
         self.timer = 0
         self.begining = time.time()   
         
-        self.online_exp = online_exp
+        self.exp_type = exp_type
         self.sim_net_id = ''
             
         # FPS TEST parameters
@@ -742,6 +756,12 @@ class SwarmSimulator(arcade.Window):
         
         # Open file to save timings
         self.results_file = None
+        
+        # User-study
+        if exp_type == "user_study":
+            self.belief_fig = None
+            self.ax = None
+            self.im = None
         
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -926,6 +946,16 @@ class SwarmSimulator(arcade.Window):
         self.operator_belief_maps = []
         self.operator_confidence_maps = []
         
+        if self.exp_type == "user_study":
+            # Belief Plot
+            self.belief_fig = plt.figure("Operator's Belief Map")
+            self.ax = self.belief_fig.add_subplot(111)                    
+            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.belief_fig.show()
+
+            # drones
+            self.picked_drone = None
+
     def log_setup(self, directory = None):
         if directory == None:      
             log = open("log_setup.txt", "w")
@@ -1100,7 +1130,7 @@ class SwarmSimulator(arcade.Window):
                   
     def update(self, interval):
         if self.timer == 0:
-            if self.online_exp is not None:
+            if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
             
         if self.timer >= self.run_time:
@@ -1128,7 +1158,7 @@ class SwarmSimulator(arcade.Window):
                  w.writerow(self.drone_distances.values())
              '''
 
-        if self.online_exp is not None:
+        if self.exp_type == "normal_network":
             # Sending maps to web-api for game interface
                 self.send_data(self.operator_list[0])
         
@@ -1136,6 +1166,13 @@ class SwarmSimulator(arcade.Window):
         start_time = timeit.default_timer()
 
         self.timer += 1
+
+        if self.exp_type == "user_study":
+            data_map = np.asarray(self.operator_list[0].internal_map)
+            data_map = np.clip(data_map, 0, 1)
+            rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
+            self.im.set_array(rescaled_map)
+            self.belief_fig.canvas.draw()
 
         # To refresh the communications in drones
         for drone in self.drone_list:
@@ -1523,47 +1560,29 @@ class SwarmSimulator(arcade.Window):
          np.savetxt(directory + '/' + 'swarm_distribution.csv', rescaled_map, delimiter=",")
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_RIGHT:
-            
-            # def find_nbs(matrix, indices):
-                
-            #     matrix = np.array(matrix)
-            #     indices = tuple(np.transpose(np.atleast_2d(indices)))
-            #     arr_shape = np.shape(matrix)
-                
-            #     dist = np.ones(arr_shape)
-            #     dist[indices] = 0
-            #     dist = scipy.ndimage.distance_transform_cdt(dist, metric='chessboard')
-                
-            #     nb_indexes = np.transpose(np.nonzero(dist == 1))
-                
-            #     return nb_indexes
-            
-            # j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
-            # i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
-            
-            # nbs = find_nbs(self.operator_list[0].confidence_map, [i, j])
-            
-            # for node in nbs:
-            #     a = node[0]
-            #     b = node[1]
-            #     self.operator_list[0].confidence_map[a][b] += 1
-            # self.operator_list[0].confidence_map[i][j] += 1
-            
-            # print("right mouse clicked: {},{} --> {},{}".format(str(x), str(y), str(i), str(j)))
-            # print(self.operator_list[0].confidence_map[i][j])
-            
-            selected_drone=None
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            if self.exp_type == "user_study":                
+                for drone in self.drone_list:
+                    if (((drone.center_x-x)*(drone.center_x-x)<drone.width) and ((drone.center_y-y)*(drone.center_y-y)<drone.height)):
+                        self.picked_drone = drone
+                        print(self.picked_drone.name)
+                        print("drone selected with collision radius :",self.picked_drone.collision_radius)
+                        break
+                if(self.picked_drone==None):
+                    return
 
-            for drone in self.drone_list:
-               if (((drone.center_x-x)*(drone.center_x-x)<drone.width) and ((drone.center_y-y)*(drone.center_y-y)<drone.height)):
-                   selected_drone=drone
-                   print(selected_drone.name)
-                   print("drone selected with collision radius :",selected_drone.collision_radius)
-                   break
-            if(selected_drone==None):
-                return
-            self.display_selected_drone_info(selected_drone)      
+    def on_mouse_release(self, x, y, button, modifiers):
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            if self.exp_type == "user_study":
+                if self.picked_drone:
+                    j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    self.picked_drone.confidence_map = np.array([[1.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
+                    self.picked_drone.confidence_map[i][j] = 0
+                    print("{} to position ({},{})".format(self.picked_drone.name.title(), i, j))
+                    self.picked_drone = None
+                else:
+                    print("Select a drone first!")
             
     def on_draw(self):
         # Start timing how long this takes
@@ -1579,14 +1598,23 @@ class SwarmSimulator(arcade.Window):
 
         self.draw_time = timeit.default_timer() - draw_start_time
         self.fps.tick()
-        arcade.draw_text("Timestep: {}".format(self.timer), self.ARENA_WIDTH/2,
-                         self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
-        if self.online_exp is not None:
+        arcade.draw_text("Timesteps: {}/{}".format(self.timer, self.run_time), self.ARENA_WIDTH/2,
+                            self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
+        if self.exp_type == "normal_network":
             arcade.draw_text("Online", self.ARENA_WIDTH/2,
-                         self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+                            self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+        elif self.exp_type == "user_study":
+            arcade.draw_text("User study", self.ARENA_WIDTH/2,
+                            self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+            if self.picked_drone:
+                arcade.draw_text("{} selected, now point to the location and release the button!".format(self.picked_drone.name.title()), self.ARENA_WIDTH/2,
+                                20, arcade.color.GO_GREEN, 9, anchor_x='center')
+            else:
+                arcade.draw_text("Select a drone by right-clicking and not releasing button!", self.ARENA_WIDTH/2,
+                                20, arcade.color.RED, 9, anchor_x='center')
         else:
             arcade.draw_text("Stand-alone", self.ARENA_WIDTH/2,
-                         self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+                            self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
         
     def send_data(self, operator):
         """
@@ -1609,30 +1637,14 @@ class SwarmSimulator(arcade.Window):
         
         return r.status_code
 
-
-    def network_command(self, operation, x=0, y=0):
-        
-        def find_nbs(matrix, indices):
-            
-            matrix = np.array(matrix)
-            indices = tuple(np.transpose(np.atleast_2d(indices)))
-            arr_shape = np.shape(matrix)
-            
-            dist = np.ones(arr_shape)
-            dist[indices] = 0
-            dist = scipy.ndimage.distance_transform_cdt(dist, metric='chessboard')
-            
-            nb_indexes = np.transpose(np.nonzero(dist == 1))
-            
-            return nb_indexes
-        
+    def network_command(self, operation, x=0, y=0):        
         if operation == "attract":
             nbs = find_nbs(self.operator_list[0].confidence_map, [x, y])
             for node in nbs:
                 a = node[0]
                 b = node[1]
-                self.operator_list[0].confidence_map[a][b] -= 1
-            self.operator_list[0].confidence_map[x][y] -= 1
+                self.operator_list[0].confidence_map[a][b] = 0
+            self.operator_list[0].confidence_map[x][y] = 0
         elif operation == "deflect":
             nbs = find_nbs(self.operator_list[0].confidence_map, [x, y])
             for node in nbs:
@@ -1672,7 +1684,7 @@ def main(SIM_ID, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_
     sim_net_id = SIM_ID
 
     sim = SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
-                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, "Normal_Network")
+                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, "normal_network")
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
                 reliability_2, unreliability_percentage, moving_disaster, communication_noise,
                 alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,

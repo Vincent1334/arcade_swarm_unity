@@ -23,7 +23,7 @@ from run import trim_cmd
 EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
 async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
-                         INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
+                         INPUT_TIME, GRID_X, GRID_Y, exp_type, disaster_size, disaster_location, operator_size,
                          operator_location,reliability_1, reliability_2, unreliability_percentage, moving_disaster,
                          communication_noise, alpha, normal_command, command_period, constant_repulsion,
                          operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
@@ -84,7 +84,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                moving_disaster = False, communication_noise = 0, alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, 
                operator_vision_radius = 150, communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999,
                gp = False, gp_step = 50, maze = None, through_walls = True, communication_noise_strength = 0, communication_noise_prob = 0, positioning_noise_strength = 0,
-               positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0, online_exp = None):
+               positioning_noise_prob = 0, sensing_noise_strength = 0, sensing_noise_prob = 0, exp_type = None):
 
     clients = {}
     async def start_listen(websocket, path, name_of_experiment):
@@ -101,7 +101,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
                 name_of_experiment = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
             await threaded_client(reply, websocket, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
-                        INPUT_TIME, GRID_X, GRID_Y, online_exp, disaster_size, disaster_location, operator_size,
+                        INPUT_TIME, GRID_X, GRID_Y, exp_type, disaster_size, disaster_location, operator_size,
                         operator_location,reliability[0], reliability[1], unreliability_percentage, moving_disaster,
                         communication_noise, alpha, normal_command, command_period, constant_repulsion,
                         operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
@@ -112,7 +112,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
             print(reply)
 
 
-    if online_exp is not None: # In case we have an online experience
+    if exp_type == "normal_network": # In case we have an online experience
         print("start web socket server")
         start_server = websockets.serve(functools.partial(start_listen, name_of_experiment=name_of_experiment), "localhost", 8765)
 
@@ -120,7 +120,7 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         asyncio.get_event_loop().run_forever()
 
     else:
-        sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, online_exp)
+        sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, exp_type)
         sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
                 alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
                 communication_range, vision_range, velocity_weight_coef, boundary_repulsion, aging_factor, gp, gp_step, maze, through_walls,
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument('-positioning_noise_prob', type = float, default = 0) 
     parser.add_argument('-sensing_noise_strength', type = float, default = 0) 
     parser.add_argument('-sensing_noise_prob', type = float, default = 0) 
-    parser.add_argument('-online_exp', type = str, default = None) # Online experiment modes
+    parser.add_argument('-exp_type', type = str, default = None) # Online experiment modes
 
     args = parser.parse_args()
     
@@ -252,4 +252,4 @@ if __name__ == '__main__':
          disasters_locations, len(operators_locations), operators_locations, (args.r_min, args.r_max), args.r_perc, args.noise, args.d_move, 
          args.alpha, args.cmd, args.cmd_t, args.const_repel, args.hum_r, args.comm_range, args.vis_range, args.w, args.bound, args.aging, 
          args.gp, args.gp_step, args.maze, args.walls, args.communication_noise_strength, args.communication_noise_prob,
-         args.positioning_noise_strength, args.positioning_noise_prob, args.sensing_noise_strength, args.sensing_noise_prob, args.online_exp)
+         args.positioning_noise_strength, args.positioning_noise_prob, args.sensing_noise_strength, args.sensing_noise_prob, args.exp_type)

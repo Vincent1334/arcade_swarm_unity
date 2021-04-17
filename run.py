@@ -99,7 +99,7 @@ def moving_disaster():
     cmds = []             
     #cmds.append('-name "moving_disaster" -d_x 500 -d_y 500 -d_move "True"')
     #cmds.append('-name "moving_disaster" -d_x 100 -d_y 500 -d_move "True"')
-    cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True"')
+    cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True" -run_time 200 -exp_type "user_study" ')
     return cmds
 
 def obstacle():
@@ -163,10 +163,10 @@ def bottleneck_tests(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_range
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
     return cmds
 
-def online_experiment(swarm_size = 15, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, online_exp = "Normal_Network", ex_time = 500):
+def online_experiment(swarm_size = 15, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, online_exp = "normal_network", ex_time = 500):
     cmds = []  
     for exp_num in range(1):
-        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -online_exp ' + str(online_exp) + ' -run_time ' + str(ex_time) \
+        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -exp_type ' + str(online_exp) + ' -run_time ' + str(ex_time) \
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -size ' + str(swarm_size))
     return cmds
     
