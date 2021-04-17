@@ -99,7 +99,7 @@ def moving_disaster():
     cmds = []             
     #cmds.append('-name "moving_disaster" -d_x 500 -d_y 500 -d_move "True"')
     #cmds.append('-name "moving_disaster" -d_x 100 -d_y 500 -d_move "True"')
-    cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True" -run_time 200 -exp_type "user_study" ')
+    cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True"')
     return cmds
 
 def obstacle():
@@ -177,6 +177,13 @@ def accuracy_diag(swarm_size = 1, r = 40, alpha = 0.99, t = 300, comm_range = 15
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range)+ ' -run_time ' + str(ex_time))
     return cmds
 
+def user_study1(swarm_size = 15, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, exp_type = "user_study", ex_time = 200):
+    cmds = []  
+    for exp_num in range(1):
+        cmds.append('-name User_Study_1_S{}'.format(swarm_size) + ' -exp_type ' + str(exp_type) + ' -run_time ' + str(ex_time) \
+                    + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -size ' + str(swarm_size) + ' -d_move ' + str(True))
+    return cmds
+
 def trim_cmd(cmd):    
     PATTERN = re.compile(r'''((?:[^ "]|"[^"]*")+)''')
     cmd = PATTERN.split(cmd)[1::2]
@@ -245,6 +252,9 @@ if __name__ == "__main__":
             cmds = online_experiment()
         elif exp == 26:
             cmds = accuracy_diag()
+        elif exp == 27:
+            cmds = user_study1()
+
             
         for cmd in cmds:            
             proc = subprocess.Popen([sys.executable, 'init.py'] + trim_cmd(cmd))
