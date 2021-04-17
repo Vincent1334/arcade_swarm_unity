@@ -694,8 +694,10 @@ def listener(sim):
         else:
             r = r.split(',')
             if r[0] == 'attract':
+                sim.c_count += 1
                 sim.network_command("attract", int(r[1]), int(r[2]))
             elif r[0] == 'deflect':
+                sim.c_count += 1
                 sim.network_command("deflect", int(r[1]), int(r[2]))
             else:
                 print("Wrong Command!")
@@ -775,6 +777,9 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig2 = None
             self.ax2 = None
             self.im2 = None
+            
+            self.u_name = None
+            self.c_count = 0
             
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -1152,7 +1157,10 @@ class SwarmSimulator(arcade.Window):
                 
             if self.exp_type == "user_study":
                 self.u_name = input("Please enter your name: ")
-
+                
+            if self.exp_type == "normal_network":
+                self.u_name = "user study 2 participant"
+                
         if self.timer >= self.run_time:
              if self.exp_type == "user_study":
                 directory = self.directory
@@ -1168,7 +1176,21 @@ class SwarmSimulator(arcade.Window):
                 log.write('  -- Click count: ' + str(self.c_count) + '\n') 
 
                 log.close()
-            
+             if self.exp_type == "normal_network":
+                directory = self.directory
+                if directory == None:      
+                    log = open("log_setup.txt", "a")
+                else:
+                    log = open(directory + "/log_setup.txt", "a") 
+
+                log.write('\nUser study info:' + '\n')
+                log.write('  -- Experiment: ' + str("User study 2") + '\n')  
+                log.write('  -- Player: ' + str(self.u_name) + '\n') 
+                log.write('  -- Data: ' + str(datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")) + '\n') 
+                log.write('  -- Click count: ' + str(self.c_count) + '\n') 
+
+                log.close()
+                
              arcade.close_window()
              
              '''
