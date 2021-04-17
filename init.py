@@ -118,13 +118,13 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
 
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
-
+        
     else:
         sim = simulation.SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, exp_type)
-        sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, moving_disaster, communication_noise, 
-                alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
-                communication_range, vision_range, velocity_weight_coef, boundary_repulsion, aging_factor, gp, gp_step, maze, through_walls,
-                communication_noise_strength, communication_noise_prob, positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)  
+        sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability[0], reliability[1], unreliability_percentage, 
+                   moving_disaster, communication_noise, alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
+                   communication_range, vision_range, velocity_weight_coef, boundary_repulsion, aging_factor, gp, gp_step, maze, through_walls,
+                   communication_noise_strength, communication_noise_prob, positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob)
 
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
@@ -140,7 +140,6 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         directory = sim.directory
             
         sim.log_setup(directory)   
-        print("Current Thread: {}".format(current_thread()))
         arcade.run()              
         # cProfile.run('arcade.run()')    
         

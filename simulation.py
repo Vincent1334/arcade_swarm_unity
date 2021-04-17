@@ -17,6 +17,7 @@ import time as timeclock
 import datetime
 import argparse
 
+np.seterr(divide='ignore', invalid='ignore')
 
 EXP_D_T = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
@@ -762,7 +763,14 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig = None
             self.ax = None
             self.im = None
-        
+            
+            # drones
+            self.picked_drone = None
+            
+            # game
+            self.u_name = None
+            self.c_count = 0
+            
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
         arcade.set_background_color(arcade.color.WHITE)
@@ -835,7 +843,6 @@ class SwarmSimulator(arcade.Window):
         
         # initializing disaster objects
         self.disaster_size = disaster_size
-        print( "diaster size: ", self.disaster_size)
 
         self.disaster_list = arcade.SpriteList()        
         for i in range (self.disaster_size):            
@@ -953,14 +960,12 @@ class SwarmSimulator(arcade.Window):
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
             self.belief_fig.show()
 
-            # drones
-            self.picked_drone = None
 
     def log_setup(self, directory = None):
         if directory == None:      
-            log = open("log_setup.txt", "w")
+            log = open("log_setup.txt", "a")
         else:
-            log = open(directory + "/log_setup.txt", "w")        
+            log = open(directory + "/log_setup.txt", "a")        
         self.directory = directory
         
         log.write('GENERAL INFO:' + '\n')
@@ -1129,11 +1134,29 @@ class SwarmSimulator(arcade.Window):
          return collections.Counter(distances)
                   
     def update(self, interval):
-        if self.timer == 0:
+        if self.timer == 1:
             if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
-            
+                
+            if self.exp_type == "user_study":
+                self.u_name = input("Please enter your name: ")
+
         if self.timer >= self.run_time:
+             if self.exp_type == "user_study":
+                directory = self.directory
+                if directory == None:      
+                    log = open("log_setup.txt", "a")
+                else:
+                    log = open(directory + "/log_setup.txt", "a") 
+
+                log.write('\nUser study info:' + '\n')
+                log.write('  -- Experiment: ' + str("Stand-alone") + '\n')  
+                log.write('  -- Player: ' + str(self.u_name) + '\n') 
+                log.write('  -- Data: ' + str(datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")) + '\n') 
+                log.write('  -- Click count: ' + str(self.c_count) + '\n') 
+
+                log.close()
+            
              arcade.close_window()
              
              '''
@@ -1181,8 +1204,8 @@ class SwarmSimulator(arcade.Window):
         #if self.timer % 100 == 0:             
         #     print(self.timer)
              
-        if self.timer == 100:
-            print('***', time.time() - self.begining, '***')
+        # if self.timer == 100:
+        #     print('***', time.time() - self.begining, '***')
         
         self.disaster_list.update_animation()        
         self.disaster_list.update()
@@ -1344,7 +1367,7 @@ class SwarmSimulator(arcade.Window):
 
                     self.results_file.write(output)
                     
-                    print(output, end="")
+                    # print(output, end="")
 
                     self.fps_list.append(round(self.fps.get_fps(), 1))
                     self.processing_time_list.append(self.processing_time)
@@ -1561,12 +1584,11 @@ class SwarmSimulator(arcade.Window):
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            if self.exp_type == "user_study":                
+            if self.exp_type == "user_study":
+                self.c_count += 1
                 for drone in self.drone_list:
                     if (((drone.center_x-x)*(drone.center_x-x)<drone.width) and ((drone.center_y-y)*(drone.center_y-y)<drone.height)):
                         self.picked_drone = drone
-                        print(self.picked_drone.name)
-                        print("drone selected with collision radius :",self.picked_drone.collision_radius)
                         break
                 if(self.picked_drone==None):
                     return
@@ -1605,10 +1627,14 @@ class SwarmSimulator(arcade.Window):
                             self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
         elif self.exp_type == "user_study":
             arcade.draw_text("User study", self.ARENA_WIDTH/2,
-                            self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+                            self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
             if self.picked_drone:
                 arcade.draw_text("{} selected, now point to the location and release the button!".format(self.picked_drone.name.title()), self.ARENA_WIDTH/2,
                                 20, arcade.color.GO_GREEN, 9, anchor_x='center')
+            elif self.timer == 1:
+                arcade.draw_rectangle_filled(self.ARENA_WIDTH/2, self.ARENA_HEIGHT/2 + 8, self.ARENA_WIDTH, 40, arcade.color.ASH_GREY)
+                arcade.draw_text("Please enter your name in the terminal to start.", self.ARENA_WIDTH/2,
+                                self.ARENA_HEIGHT/2, arcade.color.BLACK, 15, anchor_x='center')
             else:
                 arcade.draw_text("Select a drone by right-clicking and not releasing button!", self.ARENA_WIDTH/2,
                                 20, arcade.color.RED, 9, anchor_x='center')
