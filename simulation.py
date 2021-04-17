@@ -771,6 +771,11 @@ class SwarmSimulator(arcade.Window):
             self.u_name = None
             self.c_count = 0
             
+        if exp_type == "normal_network":
+            self.belief_fig2 = None
+            self.ax2 = None
+            self.im2 = None
+            
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
         arcade.set_background_color(arcade.color.WHITE)
@@ -959,6 +964,13 @@ class SwarmSimulator(arcade.Window):
             self.ax = self.belief_fig.add_subplot(111)                    
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
             self.belief_fig.show()
+            
+        if self.exp_type == "normal_network":
+            # Belief Plot
+            self.belief_fig2 = plt.figure("Operator's Belief Map")
+            self.ax2 = self.belief_fig2.add_subplot(111)                    
+            self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.belief_fig2.show()
 
 
     def log_setup(self, directory = None):
@@ -1150,7 +1162,7 @@ class SwarmSimulator(arcade.Window):
                     log = open(directory + "/log_setup.txt", "a") 
 
                 log.write('\nUser study info:' + '\n')
-                log.write('  -- Experiment: ' + str("Stand-alone") + '\n')  
+                log.write('  -- Experiment: ' + str("User study 1") + '\n')  
                 log.write('  -- Player: ' + str(self.u_name) + '\n') 
                 log.write('  -- Data: ' + str(datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")) + '\n') 
                 log.write('  -- Click count: ' + str(self.c_count) + '\n') 
@@ -1196,6 +1208,13 @@ class SwarmSimulator(arcade.Window):
             rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
             self.im.set_array(rescaled_map)
             self.belief_fig.canvas.draw()
+            
+        if self.exp_type == "normal_network":
+            data_map = np.asarray(self.operator_list[0].internal_map)
+            data_map = np.clip(data_map, 0, 1)
+            rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
+            self.im2.set_array(rescaled_map)
+            self.belief_fig2.canvas.draw()
 
         # To refresh the communications in drones
         for drone in self.drone_list:
@@ -1597,10 +1616,12 @@ class SwarmSimulator(arcade.Window):
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 if self.picked_drone:
-                    j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
-                    i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
-                    self.picked_drone.confidence_map = np.array([[1.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
-                    self.picked_drone.confidence_map[i][j] = 0
+                    # j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    # i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    i = 40 - math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    j = 40 - math.trunc((y * (self.GRID_Y -1)/self.ARENA_HEIGHT))
+                    self.picked_drone.confidence_map = np.array([[0.5 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
+                    self.picked_drone.confidence_map[j][j] = 0
                     print("{} to position ({},{})".format(self.picked_drone.name.title(), i, j))
                     self.picked_drone = None
                 else:
