@@ -1477,12 +1477,12 @@ class SwarmSimulator(arcade.Window):
         if (self.exp_type == 6):
             self.save_one_heatmap(selected_drone.internal_map, 'belief_' + str(self.timer), "6th")
         '''
-        # data_conf = np.asarray(selected_drone.confidence_map)
+        data_conf = np.asarray(selected_drone.confidence_map)
         data_internal =  np.asarray(selected_drone.internal_map)        
         data_global = np.asarray(self.global_map)
                 
         # Rescale to 0-255 and convert to uint8 
-        # rescaled_conf = (255.0 * (data_conf - data_conf.min()) / (data_conf.max() - data_conf.min())).astype(np.uint8)
+        rescaled_conf = (255.0 * (data_conf - data_conf.min()) / (data_conf.max() - data_conf.min())).astype(np.uint8)
         rescaled_internal = (255.0 * (data_internal - data_internal.min())/ (data_internal.max() - data_internal.min())).astype(np.uint8)
         rescaled_global = (255.0 * (data_global - data_global.min()) / (data_global.max() - data_global.min())).astype(np.uint8)
         
@@ -1498,7 +1498,7 @@ class SwarmSimulator(arcade.Window):
         ax.append( fig.add_subplot(1, 3, 1) )
         #cmap = matplotlib.cm.gist_stern
         ax[-1].set_title(" Confidence")  # set title
-        #plt.imshow(rescaled_conf, cmap = cm.gist_stern_r,interpolation='nearest')
+        plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
         # im = plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
         
         #plt.imshow(rescaled_conf, cmap = cm.gnuplot2_r,interpolation='nearest')
@@ -1622,30 +1622,44 @@ class SwarmSimulator(arcade.Window):
          data_map = sim.drones_positions        
          rescaled_map = (255.0  * (data_map - data_map.min())/(data_map.max() - data_map.min())).astype(np.uint8)
          np.savetxt(directory + '/' + 'swarm_distribution.csv', rescaled_map, delimiter=",")
-
+    
+    # drag a drone
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 self.c_count += 1
                 for drone in self.drone_list:
-                    if (((drone.center_x-x)*(drone.center_x-x)<drone.width) and ((drone.center_y-y)*(drone.center_y-y)<drone.height)):
+					# dx^2 + dy^2 < 2 * r^2 to catch the area around drone as well
+                    if ((drone.center_x-x)*(drone.center_x-x) + (drone.center_y-y)*(drone.center_y-y) < drone.width*drone.width*4):
                         self.picked_drone = drone
                         break
                 if(self.picked_drone==None):
                     return
-
+    
+    # drop the drone to a target position
     def on_mouse_release(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 if self.picked_drone:
                     # j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
                     # i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
-                    i = 40 - math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
-                    j = 40 - math.trunc((y * (self.GRID_Y -1)/self.ARENA_HEIGHT))
-                    self.picked_drone.confidence_map = np.array([[0.5 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
-                    self.picked_drone.confidence_map[j][j] = 0
+                    x_grid = 40 - math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
+                    y_grid = 40 - math.trunc((y * (self.GRID_Y -1)/self.ARENA_HEIGHT))
+                    
+                    #set the confidence of the drone 
+                    #self.picked_drone.confidence_map = np.array([[0.5 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
+                    
+                    #self.picked_drone.confidence_map[j][j] = -100
+                    
+                    for i in range(self.GRID_Y):
+                        for j in range(self.GRID_X):                    
+                            r = np.sqrt((i-x_grid)**2 + (j-y_grid)**2)                    
+                            r = 1 - r/(self.GRID_X/2)                    
+                            self.picked_drone.confidence_map[j][self.GRID_X-1-i] = self.picked_drone.confidence_map[j][self.GRID_X-1-i] - 2 * r     
                     print("{} to position ({},{})".format(self.picked_drone.name.title(), i, j))
+                    self.display_selected_drone_info(self.picked_drone)
                     self.picked_drone = None
+                    
                 else:
                     print("Select a drone first!")
             
