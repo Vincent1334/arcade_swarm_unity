@@ -1666,7 +1666,7 @@ class SwarmSimulator(arcade.Window):
                             r = 1 - r/(self.GRID_X/2)                    
                             self.picked_drone.confidence_map[j][self.GRID_X-1-i] = self.picked_drone.confidence_map[j][self.GRID_X-1-i] - 2 * r    
                              
-                    print("{} to position ({},{})".format(self.picked_drone.name.title(), i, j))
+                    print("{} to position ({},{})".format(self.picked_drone.name.title(), x_grid, y_grid))
                     # self.display_selected_drone_info(self.picked_drone)
                     self.picked_drone = None
                     
@@ -1755,7 +1755,7 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study_2":
             if event.inaxes:
                 self.c_count += 1
-                x_r = math.trunc(event.ydata)
+                x_r = 40 - math.trunc(event.xdata)
                 y_r = math.trunc(event.ydata)
                 self.u2_warning = "({}, {})".format(x_r, y_r)
                 
