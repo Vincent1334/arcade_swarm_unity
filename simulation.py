@@ -1235,9 +1235,9 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig.canvas.flush_events()
             self.belief_fig.canvas.draw()
 
-        # To refresh the communications in drones
-        for drone in self.drone_list:
-            drone.have_communicated = False
+        # # To refresh the communications in drones
+        # for drone in self.drone_list:
+        #     drone.have_communicated = False
         
         #if self.timer % 100 == 0:             
         #     print(self.timer)
