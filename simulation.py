@@ -972,9 +972,9 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig.show()
     
         if self.exp_type == "user_study_2":
-            self.u2_warning = "Click on either confidence or belief map to navigate drones!"
+            self.u2_warning = "Click on confidence or belief map."
             # Belief Plot
-            self.belief_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(40, 40))
+            self.belief_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 8))
 
             self.belief_fig.suptitle("Status: Pause\n\n"
                 "Enter your name in terminal to Start! \n\n"
@@ -986,8 +986,7 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
-            mng = plt.get_current_fig_manager()
-            mng.resize(*mng.window.maxsize())
+
             self.belief_fig.show()
             
 
@@ -1762,7 +1761,7 @@ class SwarmSimulator(arcade.Window):
                             
                 print("Clicked on {}, {}".format(event.xdata, event.ydata))      
             else:
-                self.u2_warning = "Only clicks on either one of the maps will be accepted!"
+                self.u2_warning = "Only click on map areas!"
                 print("Clicked on the confidence map please!")      
 
 def merge(list1, list2):       

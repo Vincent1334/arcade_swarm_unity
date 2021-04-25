@@ -140,6 +140,9 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         directory = sim.directory
             
         sim.log_setup(directory)   
+        if exp_type == "user_study_2":
+            sim.set_visible(False)
+
         arcade.run()              
         # cProfile.run('arcade.run()')    
         
