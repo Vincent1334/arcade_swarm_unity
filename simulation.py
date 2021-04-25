@@ -778,6 +778,7 @@ class SwarmSimulator(arcade.Window):
             # game
             self.u_name = None
             self.c_count = 0
+            self.click_map = []
             
             # U2 Warning
             self.u2_warning = None
@@ -1193,6 +1194,7 @@ class SwarmSimulator(arcade.Window):
 
                 log.close()
                 
+                self.save_click_map()
              arcade.close_window()
              
              '''
@@ -1324,8 +1326,6 @@ class SwarmSimulator(arcade.Window):
             #    self.swarm_internal_error.append(self.get_swarm_internal_error(belief_map = 'gp_predict'))
             #else:
             self.swarm_internal_error.append(self.get_swarm_internal_error())
-
-
             
             self.operator_confidence.append(self.get_operator_confidence())
             #if self.GP == True:
@@ -1643,12 +1643,15 @@ class SwarmSimulator(arcade.Window):
     def on_mouse_release(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
+                x_gr = 0
+                y_gr = 0
                 if self.picked_drone:
                     # j = math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
                     # i = math.trunc((y * (self.GRID_X -1)/self.ARENA_WIDTH))
                     x_grid = 40 - math.trunc((x * (self.GRID_X -1)/self.ARENA_WIDTH))
                     y_grid = 40 - math.trunc((y * (self.GRID_Y -1)/self.ARENA_HEIGHT))
-                    
+                    x_gr = x_grid
+                    y_gr = y_grid
                     #set the confidence of the drone 
                     #self.picked_drone.confidence_map = np.array([[0.5 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
                     
@@ -1666,6 +1669,15 @@ class SwarmSimulator(arcade.Window):
                     
                 else:
                     print("Select a drone first!")
+                    
+                c_i = None
+                for click in self.click_map:
+                    if click[1] == x_gr and click[2] == y_gr:
+                        c_i = self.click_map.index(click)
+                if c_i != None:
+                    self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_gr, y_gr)
+                else:
+                    self.click_map.append((1, x_gr, y_gr))
             
     def on_draw(self):
         # Start timing how long this takes
@@ -1751,18 +1763,38 @@ class SwarmSimulator(arcade.Window):
                 self.c_count += 1
                 x_r = 40 - math.trunc(event.xdata)
                 y_r = math.trunc(event.ydata)
-                self.u2_warning = "({}, {})".format(x_r, y_r)
+                self.u2_warning = "({}, {})".format(math.trunc(event.xdata), y_r)
                 
                 for i in range(self.GRID_Y):
                     for j in range(self.GRID_X):                    
                         r = np.sqrt((i-x_r)**2 + (j-y_r)**2)                    
                         r = 1 - r/(self.GRID_X/2)                    
                         self.operator_list[0].confidence_map[j][self.GRID_X-1-i] = self.operator_list[0].confidence_map[j][self.GRID_X-1-i] - 2 * r    
-                            
-                print("Clicked on {}, {}".format(event.xdata, event.ydata))      
+                
+                c_i = None
+                for click in self.click_map:
+                    if click[1] == x_r and click[2] == y_r:
+                        c_i = self.click_map.index(click)
+                if c_i != None:
+                    self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_r, y_r)
+                else:
+                    self.click_map.append((1, x_r, y_r))
+
+                print("Clicked on {}, {} inside confidence map".format(x_r, y_r))      
             else:
                 self.u2_warning = "Only click on map areas!"
                 print("Clicked on the confidence map please!")      
+
+    def save_click_map(self):
+        import csv
+        directory = self.directory
+        if directory == '':
+            directory = 'temp'
+        with open(self.directory + '/' + "click_map" +'.csv','w') as f:
+            csv_o=csv.writer(f)
+            csv_o.writerow(['count','x','y'])
+            for row in self.click_map:
+                csv_o.writerow(row)
 
 def merge(list1, list2):       
     merged_list = [] 
