@@ -1220,30 +1220,18 @@ class SwarmSimulator(arcade.Window):
 
         self.timer += 1
 
-        if self.exp_type == "user_study":
-            data_map = np.asarray(self.operator_list[0].internal_map)
-            data_map = np.clip(data_map, 0, 1)
-            rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
-            self.im.set_array(rescaled_map)
+        if self.exp_type == "user_study":                      
+            self.im.set_array(self.operator_list[0].internal_map)
             self.belief_fig.canvas.draw()
 
         if self.exp_type == "user_study_2":
-            # Belief
-            data_map = np.asarray(self.operator_list[0].internal_map)
-            data_map = np.clip(data_map, 0, 1)
-            rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
-            # Confidence
-            data_map2 = np.asarray(self.operator_list[0].confidence_map)
-            data_map2 = np.clip(data_map2, 0, 1)
-            rescaled_map2 = (255.0  * (data_map2 - data_map2.min())/ (data_map2.max()- data_map2.min())).astype(np.uint8)                        
-            
             if self.timer > 1:
                 self.belief_fig.suptitle("Status: Running\n\n"
                         "Timesteps: {}/{}\n\n"
                         "Last coordinates: {}".format(self.timer, self.run_time, self.u2_warning), fontsize=16)
 
-            self.im.set_array(rescaled_map)
-            self.im2.set_array(rescaled_map2)
+            self.im.set_array(self.operator_list[0].internal_map)
+            self.im2.set_array(self.operator_list[0].confidence_map)
             self.belief_fig.canvas.flush_events()
             self.belief_fig.canvas.draw()
 
