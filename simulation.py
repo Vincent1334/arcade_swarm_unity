@@ -164,14 +164,18 @@ class Agent(Object):
 
         else:           
         '''
-        if random.random() > self.simulation.communication_noise_prob:
-            #self.communication_noise = random.uniform(0, self.simulation.communication_noise_strength)
-            if self.have_communicated == False:
-                self.exchange_data(agent, how)
-                self.message_count_succ += 1
-                self.have_communicated = True
-        else: 
-            self.message_count_fail += 1
+        # if random.random() > self.simulation.communication_noise_prob:
+        #     #self.communication_noise = random.uniform(0, self.simulation.communication_noise_strength)
+        #     if self.have_communicated == False:
+        #         self.exchange_data(agent, how)
+        #         self.message_count_succ += 1
+        #         self.have_communicated = True
+        # else: 
+        #     self.message_count_fail += 1
+    
+        self.exchange_data(agent, how)
+        self.message_count_succ += 1
+        self.have_communicated = True
 
     def exchange_data(self, agent, how):
         '''if (random.randrange(0, 100) < 50):
