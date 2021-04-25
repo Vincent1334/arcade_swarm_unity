@@ -986,7 +986,10 @@ class SwarmSimulator(arcade.Window):
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            mng = plt.get_current_fig_manager()
+            mng.resize(*mng.window.maxsize())
             self.belief_fig.show()
+            
 
 
     def log_setup(self, directory = None):
