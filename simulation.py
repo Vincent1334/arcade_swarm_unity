@@ -870,7 +870,11 @@ class SwarmSimulator(arcade.Window):
             scl = 0.1 #random.randrange(25, 100)/100
             
             adisaster = Disaster(x,y,spd_x,spd_y,scl,sim = self,moving=self.moving_disaster)
-            self.disaster_list.append(adisaster)               
+            self.disaster_list.append(adisaster)   
+            
+            if self.exp_type == "user_study":
+                self.disaster_list[-1].alpha = 0
+                        
         
         # initialize drones
         self.drone_info = []        
