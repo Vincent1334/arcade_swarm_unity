@@ -177,7 +177,7 @@ def accuracy_diag(swarm_size = 1, r = 40, alpha = 0.99, t = 300, comm_range = 15
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range)+ ' -run_time ' + str(ex_time))
     return cmds
 
-def user_study1(swarm_size = 15, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, exp_type = "user_study", ex_time = 500, aging_factor=0.995):
+def user_study1(swarm_size = 100, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, exp_type = "user_study", ex_time = 500, aging_factor=0.995):
     cmds = []  
     for exp_num in range(1):
         cmds.append('-name User_Study_1_S{}'.format(swarm_size) + ' -exp_type ' + str(exp_type) + ' -run_time ' + str(ex_time) \

@@ -354,7 +354,7 @@ class Drone(Agent):
         dx2 = self.convolve(self.global_sobel_x)
         dy2 = self.convolve(self.global_sobel_y)
 
-        self.local_forces.append(np.sqrt(dx1*dx1 + dy1*dy1))
+        self.local_forces.append(10 * np.sqrt(dx1*dx1 + dy1*dy1))
         self.global_forces.append(np.sqrt(dx2*dx2 + dy2*dy2))
         
         dx = dx1*(1 - self.simulation.VELOCITY_WEIGHT) + dx2*self.simulation.VELOCITY_WEIGHT
