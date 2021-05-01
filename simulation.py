@@ -904,9 +904,16 @@ class SwarmSimulator(arcade.Window):
                 if di_x > self.ARENA_WIDTH:
                     di_x = area_l / 2
                     di_y = di_y + area_l
+                
+                if di_y > self.ARENA_HEIGHT:
+                    di_y = area_l / 2
+                    di_y = di_x + area_l
+                    
             else:
                 di_x = random.randrange(310, self.ARENA_WIDTH)
                 di_y = random.randrange(0, self.ARENA_HEIGHT)
+                
+            print(di_x, di_y)
 
             self.drone_list.append(
                     Drone(x = di_x, y = di_y, speed = 1, radius = 0.02, name = "drone "+str(i), sim = self, 
