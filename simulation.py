@@ -307,10 +307,9 @@ Class Drone
     - Extends the class Agent and a controller of the drones
 '''
 class Drone(Agent):  
-    def __init__(self, speed, radius, name, sim, img = 'images/drone.png', reliability = 1, communication_noise = 0):
+    def __init__(self, x, y, speed, radius, name, sim, img = 'images/drone.png', reliability = 1, communication_noise = 0):
         
-         super().__init__(random.randrange(310, sim.ARENA_WIDTH ), random.randrange(0, sim.ARENA_HEIGHT),
-                        0, 0, radius*2, img, sim, reliability, communication_noise)         
+         super().__init__(x, y, 0, 0, radius*2, img, sim, reliability, communication_noise)         
          
          self.name = name
          
@@ -877,7 +876,15 @@ class SwarmSimulator(arcade.Window):
                         
         
         # initialize drones
-        self.drone_info = []        
+        self.drone_info = []
+
+        if self.exp_type == "user_study" or "user_study_2":
+            area = self.ARENA_HEIGHT * self.ARENA_HEIGHT
+            area_p = area / self.SWARM_SIZE
+            area_l = math.sqrt(area_p)
+            di_x = area_l / 2
+            di_y = area_l / 2
+                
         for i in range(self.SWARM_SIZE): 
             if (random.randrange(0,100) < self.unreliability_percentage):
                 reliability = random.randrange(self.min_reliability, self.max_reliability + 1)/100.0
@@ -887,8 +894,22 @@ class SwarmSimulator(arcade.Window):
             noise = random.randrange(0, self.communication_noise + 1)/10000.0
             
             self.drone_info.append('drone ' + str(i) + ": reliability: " + str(reliability) + " & communication noise: " + str(noise))            
+            
+            if self.exp_type == "user_study" or self.exp_type == "user_study_2":
+                if i == 0:
+                    pass
+                else:
+                    di_x = di_x + area_l
+                    
+                if di_x > self.ARENA_WIDTH:
+                    di_x = area_l / 2
+                    di_y = di_y + area_l
+            else:
+                di_x = random.randrange(310, self.ARENA_WIDTH)
+                di_y = random.randrange(0, self.ARENA_HEIGHT)
+
             self.drone_list.append(
-                    Drone(speed = 1, radius = 0.02, name = "drone "+str(i), sim = self, 
+                    Drone(x = di_x, y = di_y, speed = 1, radius = 0.02, name = "drone "+str(i), sim = self, 
                           reliability = reliability, communication_noise = noise))     
         
         #for info in self.drone_info:  
