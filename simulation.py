@@ -1201,7 +1201,6 @@ class SwarmSimulator(arcade.Window):
                 self.save_click_map()
              arcade.close_window()
              
-             '''
              local_f = []
              global_f = []
              for drone in self.drone_list:
@@ -1210,7 +1209,7 @@ class SwarmSimulator(arcade.Window):
 
              print('LOCAL: ', np.mean(local_f))
              print('GLOBAL: ', np.mean(global_f))
-             '''
+             
              import pandas as pd
              distances = pd.DataFrame([(v) for k, v in self.drone_distances.items()])
              distances.to_csv(self.directory + '/distances.csv', sep=',')
