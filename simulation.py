@@ -913,8 +913,6 @@ class SwarmSimulator(arcade.Window):
                 di_x = random.randrange(310, self.ARENA_WIDTH)
                 di_y = random.randrange(0, self.ARENA_HEIGHT)
                 
-            print(di_x, di_y)
-
             self.drone_list.append(
                     Drone(x = di_x, y = di_y, speed = 1, radius = 0.02, name = "drone "+str(i), sim = self, 
                           reliability = reliability, communication_noise = noise))     
