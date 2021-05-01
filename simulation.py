@@ -903,12 +903,16 @@ class SwarmSimulator(arcade.Window):
                     
                 if di_x > self.ARENA_WIDTH:
                     di_x = area_l / 2
-                    di_y = di_y + area_l
-                
-                if di_y > self.ARENA_HEIGHT:
-                    di_y = area_l / 2
-                    di_y = di_x + area_l
-                    
+                    if di_y + area_l > self.ARENA_WIDTH:
+                        gt = False
+                        ll = area_l
+                        while gt == False:
+                            ll = ll / 2
+                            if di_y + ll < self.ARENA_WIDTH:
+                                gt = True
+                        di_y = di_y + ll
+                    else:
+                        di_y = di_y + area_l
             else:
                 di_x = random.randrange(310, self.ARENA_WIDTH)
                 di_y = random.randrange(0, self.ARENA_HEIGHT)
