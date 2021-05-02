@@ -205,37 +205,62 @@ class Agent(Object):
             coeff = -1
         '''
         coeff = 0
-        #################################        
-        for j in range(self.simulation.GRID_X):
-            for i in range(self.simulation.GRID_Y):
-                agent_confidence = agent.confidence_map[i][j]
-                agent_belief = agent.internal_map[i][j]
+        ################################# 
+
+        b_a_mask = np.bitwise_and(agent.confidence_map > 0.8, agent.confidence_map > self.confidence_map)
+        np.putmask(self.internal_map, b_a_mask, agent.reliability * agent.internal_map + coeff * self.communication_noise)
+        np.putmask(self.confidence_map, b_a_mask, agent.confidence_map + coeff * self.communication_noise)
+        
+        b_s_mask = np.bitwise_and(self.confidence_map > 0.8, agent.confidence_map < self.confidence_map)
+        np.putmask(agent.internal_map, b_s_mask, self.reliability * self.internal_map + coeff * self.communication_noise)
+        np.putmask(agent.confidence_map, b_s_mask, self.confidence_map + coeff * self.communication_noise)
+        
+        l_a_mask = np.bitwise_and(agent.confidence_map < 0, agent.confidence_map < self.confidence_map)
+        np.putmask(self.internal_map, l_a_mask, agent.reliability * agent.internal_map + coeff * self.communication_noise)
+        np.putmask(self.confidence_map, l_a_mask, agent.confidence_map + coeff * self.communication_noise)
+        
+        l_s_mask = np.bitwise_and(self.confidence_map < 0, agent.confidence_map > self.confidence_map)
+        np.putmask(agent.internal_map, l_s_mask, self.reliability * self.internal_map + coeff * self.communication_noise)
+        np.putmask(agent.confidence_map, l_s_mask, self.confidence_map + coeff * self.communication_noise)
+        
+        ll_a_mask = np.bitwise_or(self.confidence_map < 0.8, self.confidence_map > 0.8)
+        np.putmask(agent.internal_map, ll_a_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
+        np.putmask(agent.confidence_map, ll_a_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
+        
+        ll_s_mask = np.bitwise_or(agent.internal_map < 0.8, agent.internal_map > 0)
+        np.putmask(self.internal_map, ll_s_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
+        np.putmask(self.confidence_map, ll_s_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
+
+        # for j in range(self.simulation.GRID_X):
+        #     for i in range(self.simulation.GRID_Y):
+        #         agent_confidence = agent.confidence_map[i][j]
+        #         agent_belief = agent.internal_map[i][j]
 				
-                self_confidence = self.confidence_map[i][j]
-                self_belief = self.internal_map[i][j]
-                #print ('confidence is ' + str(agent_confidence))
-                if (agent_confidence > 0.8) or (self_confidence > 0.8):
-                    if (agent_confidence > self_confidence):                            
-                        self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
-                        self_confidence = agent_confidence + coeff * self.communication_noise                        
-                    else:
-                        agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
-                        agent_confidence = self_confidence + coeff * self.communication_noise
-                elif (agent_confidence < 0) or (self_confidence < 0):
-                    if (agent_confidence < self_confidence):                            
-                        self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
-                        self_confidence = agent_confidence + coeff * self.communication_noise                        
-                    else:
-                        agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
-                        agent_confidence = self_confidence + coeff * self.communication_noise
-                else:
-                    agent_belief = self_belief = (self.reliability * self_belief + agent.reliability * agent_belief)/2  + coeff * self.communication_noise                                        
-                    agent_confidence = self_confidence = (self_confidence + agent_confidence)/2  + coeff * self.communication_noise
+        #         self_confidence = self.confidence_map[i][j]
+        #         self_belief = self.internal_map[i][j]
+        #         #print ('confidence is ' + str(agent_confidence))
+        #         if (agent_confidence > 0.8) or (self_confidence > 0.8):
+        #             if (agent_confidence > self_confidence):                            
+        #                 self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
+        #                 self_confidence = agent_confidence + coeff * self.communication_noise                        
+        #             else:
+        #                 agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
+        #                 agent_confidence = self_confidence + coeff * self.communication_noise
+        #         elif (agent_confidence < 0) or (self_confidence < 0):
+        #             if (agent_confidence < self_confidence):                            
+        #                 self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
+        #                 self_confidence = agent_confidence + coeff * self.communication_noise                        
+        #             else:
+        #                 agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
+        #                 agent_confidence = self_confidence + coeff * self.communication_noise
+        #         else:
+        #             agent_belief = self_belief = (self.reliability * self_belief + agent.reliability * agent_belief)/2  + coeff * self.communication_noise                                        
+        #             agent_confidence = self_confidence = (self_confidence + agent_confidence)/2  + coeff * self.communication_noise
                 
-                agent.confidence_map[i][j] = agent_confidence
-                agent.internal_map[i][j] = agent_belief
-                self.confidence_map[i][j]= self_confidence 
-                self.internal_map[i][j] = self_belief
+        #         agent.confidence_map[i][j] = agent_confidence
+        #         agent.internal_map[i][j] = agent_belief
+        #         self.confidence_map[i][j]= self_confidence 
+        #         self.internal_map[i][j] = self_belief
         '''
         #agent.internal_map = self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise                                        
         #agent.confidence_map = self.confidence_map = (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise
@@ -1726,14 +1751,14 @@ class SwarmSimulator(arcade.Window):
 					# dx^2 + dy^2 < 2 * r^2 to catch the area around drone as well
                     if ((drone.center_x-x)*(drone.center_x-x) + (drone.center_y-y)*(drone.center_y-y) < drone.width*drone.width*4):
                         self.picked_drone = drone
-                        self.display_selected_drone_info(self.picked_drone)
+                        # self.display_selected_drone_info(self.picked_drone)
                         break
                 if(self.picked_drone==None):
                     return
     
     # drop the drone to a target position
     def on_mouse_release(self, x, y, button, modifiers):
-        '''if button == arcade.MOUSE_BUTTON_LEFT:
+        if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 x_gr = 0
                 y_gr = 0
@@ -1770,7 +1795,7 @@ class SwarmSimulator(arcade.Window):
                     self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_gr, y_gr)
                 else:
                     self.click_map.append((1, x_gr, y_gr))
-         '''   
+  
     def on_draw(self):
         # Start timing how long this takes
         draw_start_time = timeit.default_timer()
