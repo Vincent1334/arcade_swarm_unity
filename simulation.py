@@ -177,7 +177,7 @@ class Agent(Object):
         self.message_count_succ += 1
         self.have_communicated = True
 
-    def exchange_data(self, agent, how):
+    def exchange_data_old(self, agent, how):
         '''if (random.randrange(0, 100) < 50):
             coeff = +1 
         else:
@@ -198,7 +198,65 @@ class Agent(Object):
             agent.internal_map = self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise                                        
             agent.confidence_map = self.confidence_map = (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise
 
-    
+    def exchange_data(self, agent, how):
+        '''if (random.randrange(0, 100) < 50):
+            coeff = +1 
+        else:
+            coeff = -1
+        '''
+        coeff = 0
+        #################################        
+        for j in range(self.simulation.GRID_X):
+            for i in range(self.simulation.GRID_Y):
+                agent_confidence = agent.confidence_map[i][j]
+                agent_belief = agent.internal_map[i][j]
+				
+                self_confidence = self.confidence_map[i][j]
+                self_belief = self.internal_map[i][j]
+                #print ('confidence is ' + str(agent_confidence))
+                if (agent_confidence > 0.8) or (self_confidence > 0.8):
+                    if (agent_confidence > self_confidence):                            
+                        self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
+                        self_confidence = agent_confidence + coeff * self.communication_noise                        
+                    else:
+                        agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
+                        agent_confidence = self_confidence + coeff * self.communication_noise
+                elif (agent_confidence < 0) or (self_confidence < 0):
+                    if (agent_confidence < self_confidence):                            
+                        self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise                        
+                        self_confidence = agent_confidence + coeff * self.communication_noise                        
+                    else:
+                        agent_belief =  self.reliability * self_belief + coeff * self.communication_noise                        
+                        agent_confidence = self_confidence + coeff * self.communication_noise
+                else:
+                    agent_belief = self_belief = (self.reliability * self_belief + agent.reliability * agent_belief)/2  + coeff * self.communication_noise                                        
+                    agent_confidence = self_confidence = (self_confidence + agent_confidence)/2  + coeff * self.communication_noise
+                
+                agent.confidence_map[i][j] = agent_confidence
+                agent.internal_map[i][j] = agent_belief
+                self.confidence_map[i][j]= self_confidence 
+                self.internal_map[i][j] = self_belief
+        '''
+        #agent.internal_map = self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise                                        
+        #agent.confidence_map = self.confidence_map = (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise
+
+        agent.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise
+        agent.internal_map [agent.internal_map > 1] = 1
+        agent.internal_map [agent.internal_map < -10] = -10
+        
+        self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise
+        self.internal_map [self.internal_map  > 1] = 1
+        self.internal_map [self.internal_map < -10] = -10
+        
+        agent.confidence_map = (self.reliability * self.confidence_map + agent.reliability * agent.confidence_map)/2  + coeff * self.communication_noise                                        
+        agent.confidence_map [agent.confidence_map  > 1] = 1
+        agent.confidence_map [agent.confidence_map < -10] = -10
+        
+        self.confidence_map = (self.reliability * self.confidence_map + agent.reliability * agent.confidence_map)/2  + coeff * self.communication_noise                                        
+        self.confidence_map [self.confidence_map > 1] = 1
+        self.confidence_map [self.confidence_map < -10] = -10
+        '''
+        #################################
     def is_obstacle_at_position(self, k, j):
 
         obstacle = False
@@ -222,7 +280,7 @@ class Human(Agent):
     def __init__(self, x, y, scl, change_x = 0, change_y = 0, sim = None, img = "images/human.png"):
         super().__init__(x, y, change_x, change_y, scl, img, sim)
 
-    def communicate(self, agent, how = 'average'):
+    def communicate(self, agent, how = 'max'):
         super().communicate(agent, how)
     
     def update(self, gp_operator = False):
@@ -326,7 +384,7 @@ class Drone(Agent):
 	 
 	 #self.obstacles_current_range = np.array([[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])                
     
-    def communicate(self, agent, how = 'average'):            
+    def communicate(self, agent, how = 'max'):            
         super().communicate(agent, how)
 
     def custom_sobel(self, shape, axis):
@@ -1668,13 +1726,14 @@ class SwarmSimulator(arcade.Window):
 					# dx^2 + dy^2 < 2 * r^2 to catch the area around drone as well
                     if ((drone.center_x-x)*(drone.center_x-x) + (drone.center_y-y)*(drone.center_y-y) < drone.width*drone.width*4):
                         self.picked_drone = drone
+                        self.display_selected_drone_info(self.picked_drone)
                         break
                 if(self.picked_drone==None):
                     return
     
     # drop the drone to a target position
     def on_mouse_release(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_LEFT:
+        '''if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 x_gr = 0
                 y_gr = 0
@@ -1711,7 +1770,7 @@ class SwarmSimulator(arcade.Window):
                     self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_gr, y_gr)
                 else:
                     self.click_map.append((1, x_gr, y_gr))
-            
+         '''   
     def on_draw(self):
         # Start timing how long this takes
         draw_start_time = timeit.default_timer()
