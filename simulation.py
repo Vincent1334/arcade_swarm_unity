@@ -230,7 +230,10 @@ class Agent(Object):
         ll_s_mask = np.bitwise_or(agent.internal_map < 0.8, agent.internal_map > 0)
         np.putmask(self.internal_map, ll_s_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
-
+        
+        self.confidence_map[0][0] = self.confidence_map[39][0] = self.confidence_map[0][39] = self.confidence_map[39][39] = 1
+        agent.confidence_map[0][0] = agent.confidence_map[39][0] = agent.confidence_map[0][39] = agent.confidence_map[39][39] = 1
+        
         # for j in range(self.simulation.GRID_X):
         #     for i in range(self.simulation.GRID_Y):
         #         agent_confidence = agent.confidence_map[i][j]
@@ -1751,13 +1754,14 @@ class SwarmSimulator(arcade.Window):
 					# dx^2 + dy^2 < 2 * r^2 to catch the area around drone as well
                     if ((drone.center_x-x)*(drone.center_x-x) + (drone.center_y-y)*(drone.center_y-y) < drone.width*drone.width*4):
                         self.picked_drone = drone
-                        # self.display_selected_drone_info(self.picked_drone)
+                        self.display_selected_drone_info(self.picked_drone)
                         break
                 if(self.picked_drone==None):
                     return
     
     # drop the drone to a target position
     def on_mouse_release(self, x, y, button, modifiers):
+        '''
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 x_gr = 0
@@ -1795,7 +1799,7 @@ class SwarmSimulator(arcade.Window):
                     self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_gr, y_gr)
                 else:
                     self.click_map.append((1, x_gr, y_gr))
-  
+        '''
     def on_draw(self):
         # Start timing how long this takes
         draw_start_time = timeit.default_timer()
@@ -1990,7 +1994,7 @@ if __name__ == "__main__":
     parser.add_argument('-vis_range', type = int, default = 2) #vision_range
     parser.add_argument('-w', type = float, default = 0.01) #velocity_weight_coef
     parser.add_argument('-bound', type = float, default = 1) #boundary_repulsion
-    parser.add_argument('-aging', type = float, default = 0.9999) #boundary_repulsion
+    parser.add_argument('-aging', type = float, default = 0.9999) #aging factor
     parser.add_argument('-hum_r', type = int, default = 100)#operator_vision_radius    
     parser.add_argument('-height', type = int, default = 600) #arena_height
     parser.add_argument('-width', type = int, default = 600) #arena_width
