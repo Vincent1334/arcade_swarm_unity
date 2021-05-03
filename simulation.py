@@ -1754,14 +1754,13 @@ class SwarmSimulator(arcade.Window):
 					# dx^2 + dy^2 < 2 * r^2 to catch the area around drone as well
                     if ((drone.center_x-x)*(drone.center_x-x) + (drone.center_y-y)*(drone.center_y-y) < drone.width*drone.width*4):
                         self.picked_drone = drone
-                        self.display_selected_drone_info(self.picked_drone)
+                        #self.display_selected_drone_info(self.picked_drone)
                         break
                 if(self.picked_drone==None):
                     return
     
     # drop the drone to a target position
     def on_mouse_release(self, x, y, button, modifiers):
-        '''
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.exp_type == "user_study":
                 x_gr = 0
@@ -1799,7 +1798,6 @@ class SwarmSimulator(arcade.Window):
                     self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_gr, y_gr)
                 else:
                     self.click_map.append((1, x_gr, y_gr))
-        '''
     def on_draw(self):
         # Start timing how long this takes
         draw_start_time = timeit.default_timer()
