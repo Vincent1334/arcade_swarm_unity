@@ -231,14 +231,6 @@ class Agent(Object):
         np.putmask(self.internal_map, ll_s_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
         
-        # corners
-        self.confidence_map[0][0] = self.confidence_map[39][0] = self.confidence_map[0][39] = self.confidence_map[39][39] = 1
-        agent.confidence_map[0][0] = agent.confidence_map[39][0] = agent.confidence_map[0][39] = agent.confidence_map[39][39] = 1
-
-        #bottom 
-        for i in range(self.simulation.GRID_Y):
-            self.confidence_map[39][i] = agent.confidence_map[39][i] = 1
-        
         # for j in range(self.simulation.GRID_X):
         #     for i in range(self.simulation.GRID_Y):
         #         agent_confidence = agent.confidence_map[i][j]
@@ -722,7 +714,7 @@ class Drone(Agent):
         super().update()
         
         self.grid_pos_x = int(np.trunc((self.center_x * (self.simulation.GRID_X - 1) / self.simulation.ARENA_WIDTH)))
-        self.grid_pos_y = int(np.trunc(((1-self.center_y / self.simulation.ARENA_HEIGHT) * (self.simulation.GRID_Y - 1))))-1
+        self.grid_pos_y = int(np.trunc(((1-self.center_y / self.simulation.ARENA_HEIGHT) * (self.simulation.GRID_Y - 1))))
         
     def update_confidence_and_belief(self):		 
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
