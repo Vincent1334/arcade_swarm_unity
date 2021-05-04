@@ -231,8 +231,13 @@ class Agent(Object):
         np.putmask(self.internal_map, ll_s_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
         
+        # corners
         self.confidence_map[0][0] = self.confidence_map[39][0] = self.confidence_map[0][39] = self.confidence_map[39][39] = 1
         agent.confidence_map[0][0] = agent.confidence_map[39][0] = agent.confidence_map[0][39] = agent.confidence_map[39][39] = 1
+
+        #bottom 
+        for i in range(self.simulation.GRID_Y):
+            self.confidence_map[39][i] = agent.confidence_map[39][i] = 1
         
         # for j in range(self.simulation.GRID_X):
         #     for i in range(self.simulation.GRID_Y):
