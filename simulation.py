@@ -861,6 +861,8 @@ class SwarmSimulator(arcade.Window):
             self.u_name = None
             self.c_count = 0
             self.click_map = []
+            self.u_timer = 0
+            self.w_time = 0
             
             # U2 Warning
             self.u2_warning = None
@@ -1085,7 +1087,9 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study":
             # Belief Plot
             self.belief_fig = plt.figure("Operator's Belief Map")
-            self.ax = self.belief_fig.add_subplot(111)                    
+            self.ax = self.belief_fig.add_subplot(111)            
+            self.ax.set_xticks([])
+            self.ax.set_yticks([])        
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
             self.belief_fig.show()
     
@@ -1096,10 +1100,15 @@ class SwarmSimulator(arcade.Window):
 
             self.belief_fig.suptitle("Status: Pause\n\n"
                 "Enter your name in terminal to Start! \n\n"
-                    "Timesteps: {}/{}\n\n".format(self.timer, self.run_time), fontsize=16)
+                    "{}s elapsed\n\n".format(0, self.run_time), fontsize=16)
             
             self.ax.set_title("Operator's Belief Map")
+            self.ax.set_xticks([])
+            self.ax.set_yticks([])  
+            
             self.ax2.set_title("Operator's Confidence Map")
+            self.ax2.set_xticks([])
+            self.ax2.set_yticks([])
 
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
@@ -1280,17 +1289,26 @@ class SwarmSimulator(arcade.Window):
                  distances.append(int(math.sqrt(dx*dx + dy*dy)))
 
          return collections.Counter(distances)
-                  
+            
+    def on_update(self, delta_time):
+        self.u_timer += delta_time
+              
     def update(self, interval):
         if self.timer == 1:
             if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
                 
             elif self.exp_type == "user_study":
+                w_start = time.time() % 60
                 self.u_name = input("Please enter your name: ")
+                w_stop = time.time() % 60
+                self.w_time = w_stop - w_start
                 
             elif self.exp_type == "user_study_2":
+                w_start = time.time() % 60
                 self.u_name = input("Please enter your name: ")
+                w_stop = time.time() % 60
+                self.w_time = w_stop - w_start
                 
         if self.timer >= self.run_time:
              if self.exp_type == "user_study" or "user_study_2":
@@ -1350,9 +1368,10 @@ class SwarmSimulator(arcade.Window):
 
         if self.exp_type == "user_study_2":
             if self.timer > 1:
+                t_now = int(self.u_timer) % 60 - round(self.w_time)
                 self.belief_fig.suptitle("Status: Running\n\n"
-                        "Timesteps: {}/{}\n\n"
-                        "Last coordinates: {}".format(self.timer, self.run_time, self.u2_warning), fontsize=16)
+                        "{}s elapsed\n\n"
+                        "Last coordinates: {}".format(t_now, self.u2_warning), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
@@ -1809,8 +1828,9 @@ class SwarmSimulator(arcade.Window):
 
         self.draw_time = timeit.default_timer() - draw_start_time
         self.fps.tick()
-        arcade.draw_text("Timesteps: {}/{}".format(self.timer, self.run_time), self.ARENA_WIDTH/2,
-                            self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
+        if self.exp_type != "user_study":
+            arcade.draw_text("Timesteps: {}/{}".format(self.timer, self.run_time), self.ARENA_WIDTH/2,
+                                self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
         if self.exp_type == "normal_network":
             arcade.draw_text("Online", self.ARENA_WIDTH/2,
                             self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
@@ -1818,6 +1838,12 @@ class SwarmSimulator(arcade.Window):
             arcade.draw_text("User study 2", self.ARENA_WIDTH/2,
                             self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
         elif self.exp_type == "user_study":
+            if self.timer > 1:
+                timer = int(self.u_timer) % 60 - round(self.w_time)
+                arcade.draw_text(f"{timer}s elapsed", self.ARENA_WIDTH/2,
+                                self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
+            else:
+                pass
             arcade.draw_text("User study 1", self.ARENA_WIDTH/2,
                             self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
             if self.picked_drone:
