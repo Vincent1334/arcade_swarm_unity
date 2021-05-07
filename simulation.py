@@ -1338,8 +1338,8 @@ class SwarmSimulator(arcade.Window):
                  local_f += drone.local_forces
                  global_f += drone.global_forces
 
-             print('LOCAL: ', np.mean(local_f))
-             print('GLOBAL: ', np.mean(global_f))
+            #  print('LOCAL: ', np.mean(local_f))
+            #  print('GLOBAL: ', np.mean(global_f))
              
              import pandas as pd
              distances = pd.DataFrame([(v) for k, v in self.drone_distances.items()])

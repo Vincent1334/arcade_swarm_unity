@@ -9,7 +9,6 @@ import argparse
 import time
 import uuid
 import json
-from http_parser.parser import HttpParser
 from datetime import datetime
 import simulation
 from arcade import set_window, run, close_window
@@ -20,7 +19,7 @@ from run import trim_cmd
 # import cProfile
 
 
-EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+EXP_D_T = datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
 
 async def threaded_client(reply, ws, sim_instances, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,  SWARM_SIZE, run_time,
                          INPUT_TIME, GRID_X, GRID_Y, exp_type, disaster_size, disaster_location, operator_size,
