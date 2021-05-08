@@ -1291,6 +1291,8 @@ class SwarmSimulator(arcade.Window):
          return collections.Counter(distances)
             
     def on_update(self, delta_time):
+        if self.timer == 2:
+            self.w_time = delta_time
         self.u_timer += delta_time
               
     def update(self, interval):
@@ -1299,16 +1301,10 @@ class SwarmSimulator(arcade.Window):
                 Thread(target=listener, args=[self]).start()
                 
             elif self.exp_type == "user_study":
-                w_start = time.time() % 60
                 self.u_name = input("Please enter your name: ")
-                w_stop = time.time() % 60
-                self.w_time = w_stop - w_start
                 
             elif self.exp_type == "user_study_2":
-                w_start = time.time() % 60
                 self.u_name = input("Please enter your name: ")
-                w_stop = time.time() % 60
-                self.w_time = w_stop - w_start
                 
         if self.timer >= self.run_time:
              if self.exp_type == "user_study" or "user_study_2":
@@ -1368,10 +1364,11 @@ class SwarmSimulator(arcade.Window):
 
         if self.exp_type == "user_study_2":
             if self.timer > 1:
-                t_now = int(self.u_timer) % 60 - round(self.w_time)
+                t_now_s = int(self.u_timer) % 60
+                t_now_m = int(self.u_timer) // 60
                 self.belief_fig.suptitle("Status: Running\n\n"
-                        "{}s elapsed\n\n"
-                        "Last coordinates: {}".format(t_now, self.u2_warning), fontsize=16)
+                        "{}m:{}s elapsed\n\n"
+                        "Last coordinates: {}".format(t_now_m, t_now_s, self.u2_warning), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
@@ -1839,8 +1836,9 @@ class SwarmSimulator(arcade.Window):
                             self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
         elif self.exp_type == "user_study":
             if self.timer > 1:
-                timer = int(self.u_timer) % 60 - round(self.w_time)
-                arcade.draw_text(f"{timer}s elapsed", self.ARENA_WIDTH/2,
+                t_now_s = int(self.u_timer) % 60
+                t_now_m = int(self.u_timer) // 60
+                arcade.draw_text(f"{t_now_m}m:{t_now_s}s elapsed", self.ARENA_WIDTH/2,
                                 self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
             else:
                 pass
