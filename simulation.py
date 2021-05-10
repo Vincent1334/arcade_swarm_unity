@@ -1090,7 +1090,7 @@ class SwarmSimulator(arcade.Window):
             self.ax = self.belief_fig.add_subplot(111)            
             self.ax.set_xticks([])
             self.ax.set_yticks([])        
-            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.belief_fig.show()
     
         if self.exp_type == "user_study_2":
@@ -1111,8 +1111,8 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_yticks([])
 
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
-            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
-            self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
+            self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
 
             self.belief_fig.show()
             
