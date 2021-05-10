@@ -872,7 +872,7 @@ class SwarmSimulator(arcade.Window):
         arcade.set_background_color(arcade.color.WHITE)
         
     def setup(self, disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random',
-              min_reliability = 100, max_reliability = 101, unreliability_percentage = 0, moving_disaster = False, communication_noise = 0, 
+              min_reliability = 100, max_reliability = 101, unreliability_percentage = 0, communication_noise = 0, moving_disaster = False, 
               alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, operator_vision_radius = 150, 
               communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999, GP = False, gp_step = 50,
               maze = None, through_walls = True,
@@ -956,8 +956,8 @@ class SwarmSimulator(arcade.Window):
             adisaster = Disaster(x,y,spd_x,spd_y,scl,sim = self,moving=self.moving_disaster)
             self.disaster_list.append(adisaster)   
             
-            if self.exp_type == "user_study":
-                self.disaster_list[-1].alpha = 0
+            # if self.exp_type == "user_study":
+            #     self.disaster_list[-1].alpha = 0
                         
         
         # initialize drones

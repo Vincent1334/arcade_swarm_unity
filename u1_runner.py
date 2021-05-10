@@ -13,7 +13,7 @@ def main():
         name_of_experiment = "userstudy1"
           
         sim = simulation.SwarmSimulator(600, 600, name_of_experiment,  30, 500, 300, 40, 40, "user_study")
-        sim.setup(1, [(500, 500)], 1, [(450, 300)], 100, 100, 0, True, 0, 0.99, None, 0, False, 
+        sim.setup(1, [(500, 500)], 1, [(450, 300)], 100, 100, 0, 0, True, 0.99, None, 0, False, 
                   100, 5, 1, 0.01, 1, 0.995, False, 50, None, False, 0, 0, 0, 0, 0, 0)
 
         # if not os.path.isdir('outputs'):
