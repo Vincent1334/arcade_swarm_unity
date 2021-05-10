@@ -956,8 +956,8 @@ class SwarmSimulator(arcade.Window):
             adisaster = Disaster(x,y,spd_x,spd_y,scl,sim = self,moving=self.moving_disaster)
             self.disaster_list.append(adisaster)   
             
-            # if self.exp_type == "user_study":
-            #     self.disaster_list[-1].alpha = 0
+            if self.exp_type == "user_study":
+                self.disaster_list[-1].alpha = 0
                         
         
         # initialize drones
