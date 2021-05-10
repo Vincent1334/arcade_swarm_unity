@@ -323,8 +323,8 @@ class Human(Agent):
         #if self.simulation.timer == 10 or self.simulation.timer%100 == 0:
             #self.simulation.save_one_heatmap(self.internal_map, 'belief_' + str(self.simulation.timer), self.simulation.directory)
         
-        if self.simulation.timer % 100 == 0:
-            self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer), self.simulation.directory)
+        # if self.simulation.timer % 100 == 0:
+        #     self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer), self.simulation.directory)
         
         if gp_operator == True:
             if self.simulation.timer % 100 == 0:
@@ -872,7 +872,7 @@ class SwarmSimulator(arcade.Window):
         arcade.set_background_color(arcade.color.WHITE)
         
     def setup(self, disaster_size = 1, disaster_location = 'random', operator_size = 1, operator_location = 'random',
-              min_reliability = 100, max_reliability = 101, unreliability_percentage = 0, communication_noise = 0, moving_disaster = False,
+              min_reliability = 100, max_reliability = 101, unreliability_percentage = 0, moving_disaster = False, communication_noise = 0, 
               alpha = 10, normal_command = None, command_period = 0, constant_repulsion = False, operator_vision_radius = 150, 
               communication_range = 8, vision_range = 2, velocity_weight_coef = 0.01, boundary_repulsion = 1, aging_factor = 0.9999, GP = False, gp_step = 50,
               maze = None, through_walls = True,
@@ -1300,32 +1300,32 @@ class SwarmSimulator(arcade.Window):
             if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
                 
-            elif self.exp_type == "user_study":
-                self.u_name = input("Please enter your name: ")
+            # elif self.exp_type == "user_study":
+            #     self.u_name = input("Please enter your name: ")
                 
-            elif self.exp_type == "user_study_2":
-                self.u_name = input("Please enter your name: ")
+            # elif self.exp_type == "user_study_2":
+            #     self.u_name = input("Please enter your name: ")
                 
         if self.timer >= self.run_time:
-             if self.exp_type == "user_study" or "user_study_2":
-                directory = self.directory
-                if directory == None:      
-                    log = open("log_setup.txt", "a")
-                else:
-                    log = open(directory + "/log_setup.txt", "a") 
+            #  if self.exp_type == "user_study" or "user_study_2":
+            #     directory = self.directory
+            #     if directory == None:      
+            #         log = open("log_setup.txt", "a")
+            #     else:
+            #         log = open(directory + "/log_setup.txt", "a") 
 
-                log.write('\nUser study info:' + '\n')
-                if self.exp_type == "user_study":
-                    log.write('  -- Experiment: ' + str("User study 1") + '\n') 
-                if self.exp_type == "user_study_2":
-                    log.write('  -- Experiment: ' + str("User study 2") + '\n')   
-                log.write('  -- Player: ' + str(self.u_name) + '\n') 
-                log.write('  -- Data: ' + str(datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")) + '\n') 
-                log.write('  -- Click count: ' + str(self.c_count) + '\n') 
+            #     log.write('\nUser study info:' + '\n')
+            #     if self.exp_type == "user_study":
+            #         log.write('  -- Experiment: ' + str("User study 1") + '\n') 
+            #     if self.exp_type == "user_study_2":
+            #         log.write('  -- Experiment: ' + str("User study 2") + '\n')   
+            #     log.write('  -- Player: ' + str(self.u_name) + '\n') 
+            #     log.write('  -- Data: ' + str(datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")) + '\n') 
+            #     log.write('  -- Click count: ' + str(self.c_count) + '\n') 
 
-                log.close()
+            #     log.close()
                 
-                self.save_click_map()
+            #     self.save_click_map()
              arcade.close_window()
              
              local_f = []
@@ -1530,24 +1530,24 @@ class SwarmSimulator(arcade.Window):
         total_program_time = int(timeit.default_timer() - self.program_start_time)
 
         # Print out stats, or add more sprites
-        if total_program_time > self.last_fps_reading:
-            self.last_fps_reading = total_program_time
+        # if total_program_time > self.last_fps_reading:
+        #     self.last_fps_reading = total_program_time
 
-            if total_program_time > 5:
+        #     if total_program_time > 5:
 
-                if total_program_time % 2 == 1:
+        #         if total_program_time % 2 == 1:
 
-                    # Take timings
-                    output = f"{total_program_time}, {self.fps.get_fps():.1f}, " \
-                             f"{self.processing_time:.4f}, {self.draw_time:.4f}\n"
+        #             # Take timings
+        #             output = f"{total_program_time}, {self.fps.get_fps():.1f}, " \
+        #                      f"{self.processing_time:.4f}, {self.draw_time:.4f}\n"
 
-                    self.results_file.write(output)
+        #             self.results_file.write(output)
                     
-                    # print(output, end="")
+        #             # print(output, end="")
 
-                    self.fps_list.append(round(self.fps.get_fps(), 1))
-                    self.processing_time_list.append(self.processing_time)
-                    self.drawing_time_list.append(self.draw_time)
+        #             self.fps_list.append(round(self.fps.get_fps(), 1))
+        #             self.processing_time_list.append(self.processing_time)
+        #             self.drawing_time_list.append(self.draw_time)
         
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
