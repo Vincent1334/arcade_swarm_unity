@@ -1090,7 +1090,7 @@ class SwarmSimulator(arcade.Window):
             self.ax = self.belief_fig.add_subplot(111)            
             self.ax.set_xticks([])
             self.ax.set_yticks([])        
-            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.belief_fig.show()
     
         if self.exp_type == "user_study_2":
@@ -1111,8 +1111,8 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_yticks([])
 
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
-            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
-            self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='coolwarm', interpolation='nearest')
+            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
+            self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
 
             self.belief_fig.show()
             
@@ -1299,13 +1299,13 @@ class SwarmSimulator(arcade.Window):
         if self.timer == 1:
             if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
-                
+            '''    
             elif self.exp_type == "user_study":
                 self.u_name = input("Please enter your name: ")
                 
             elif self.exp_type == "user_study_2":
                 self.u_name = input("Please enter your name: ")
-                
+            '''    
         if self.timer >= self.run_time:
              if self.exp_type == "user_study" or "user_study_2":
                 directory = self.directory
@@ -1367,8 +1367,7 @@ class SwarmSimulator(arcade.Window):
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
                 self.belief_fig.suptitle("Status: Running\n\n"
-                        "{}m:{}s elapsed\n\n"
-                        "Last coordinates: {}".format(t_now_m, t_now_s, self.u2_warning), fontsize=16)
+                        "{}s left\n".format(60-t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
@@ -1633,18 +1632,18 @@ class SwarmSimulator(arcade.Window):
         ax.append( fig.add_subplot(1, 3, 1) )
         #cmap = matplotlib.cm.gist_stern
         ax[-1].set_title(" Confidence")  # set title
-        plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
+        plt.imshow(rescaled_conf, cmap='Blues', interpolation='nearest')
         # im = plt.imshow(rescaled_conf, cmap='coolwarm', interpolation='nearest')
         
         #plt.imshow(rescaled_conf, cmap = cm.gnuplot2_r,interpolation='nearest')
         ax.append( fig.add_subplot(1, 3, 2) )
         ax[-1].set_title(" Internal Map")  # set title
-        plt.imshow(rescaled_internal, cmap='coolwarm', interpolation='nearest')
+        plt.imshow(rescaled_internal, cmap='Blues', interpolation='nearest')
 
         #plt.imshow(rescaled_conf, cmap = cm.gnuplot2_r,interpolation='nearest')
         ax.append( fig.add_subplot(1, 3, 3) )
         ax[-1].set_title(" Global Map")  # set title
-        plt.imshow(rescaled_global, cmap='coolwarm', interpolation='nearest')        
+        plt.imshow(rescaled_global, cmap='Blues', interpolation='nearest')        
         plt.show()
      
     def plot_heatmaps(self, maps, title):
@@ -1659,7 +1658,7 @@ class SwarmSimulator(arcade.Window):
             
             rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
             ax.append( fig.add_subplot(2, 5, i + 1) )            
-            plt.imshow(rescaled_map, cmap='coolwarm', interpolation='nearest')            
+            plt.imshow(rescaled_map, cmap='Blues', interpolation='nearest')            
         plt.show()
     
     def save_image_plot_heatmaps(self, maps, title, directory='temp'):
@@ -1674,7 +1673,7 @@ class SwarmSimulator(arcade.Window):
             
             rescaled_map = (255.0  * (data_map - data_map.min())/ (data_map.max()- data_map.min())).astype(np.uint8)                        
             ax.append( fig.add_subplot(2, 5, i + 1) )            
-            plt.imshow(rescaled_map, cmap='coolwarm', interpolation='nearest')            
+            plt.imshow(rescaled_map, cmap='Blues', interpolation='nearest')            
         plt.savefig(directory + '/map_images/' + title + '.png')
         plt.close()
 
@@ -1718,7 +1717,7 @@ class SwarmSimulator(arcade.Window):
          rescaled_map = (255.0  * (data_map - data_map.min())/(data_map.max() - data_map.min())).astype(np.uint8)         
          #rescaled_map.to_csv('swarm_distribution.csv')
          np.savetxt('swarm_distribution_{0}.csv'.format(time.time()), rescaled_map, delimiter=",")         
-         plt.imshow(rescaled_map, cmap='coolwarm', interpolation='nearest')                
+         plt.imshow(rescaled_map, cmap='Blues', interpolation='nearest')                
          plt.show()
         
     def save_one_heatmap(self, drone_map, title, directory="temp"):    
@@ -1838,7 +1837,7 @@ class SwarmSimulator(arcade.Window):
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                arcade.draw_text(f"{t_now_m}m:{t_now_s}s elapsed", self.ARENA_WIDTH/2,
+                arcade.draw_text(f"{t_now_m}m:{t_now_s}s / 1m:00 elapsed", self.ARENA_WIDTH/2,
                                 self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
             else:
                 pass
