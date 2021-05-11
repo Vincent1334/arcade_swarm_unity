@@ -6,6 +6,7 @@ import scipy, scipy.ndimage
 import math
 import time
 from matplotlib import pyplot as plt
+import matplotlib.animation as animation
 import collections
 import os
 import timeit
@@ -850,10 +851,19 @@ class SwarmSimulator(arcade.Window):
         # User-study
         if exp_type == "user_study" or "user_study_2":
             self.u_fig = None
+            
             self.ax = None
             self.ax2 = None
+            self.ax3 = None
+            self.ax4 = None
+            
             self.im = None
             self.im2 = None
+            self.im3 = None
+            self.im4 = None
+            
+            self.im3_x = []
+            self.im3_y = []
             
             # drones
             self.picked_drone = None
@@ -1097,7 +1107,7 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study_2":
             self.u2_warning = "Click on confidence or belief map."
             # Belief Plot
-            self.u_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 5))
+            self.u_fig, ((self.ax, self.ax2), (self.ax3, self.ax4)) = plt.subplots(nrows=2, ncols=2,  figsize=(8, 8))
             plt.subplots_adjust(wspace=.5)
 
             self.u_fig.suptitle("Status: Pause\n\n"
@@ -1112,10 +1122,28 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_xticks([])
             self.ax2.set_yticks([])
 
+            self.ax3.set_title("Swarm's belief error")
+            self.ax3.grid(True)
+            
+            self.ax4.set_title("To be set")
+            self.ax4.set_xticks([])
+            self.ax4.set_yticks([])
+            
             self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
-           
+
+            self.ax3.set_title("Swarm's belief error")
+            self.ax3.set_xlabel("Time step")
+            self.ax3.set_ylabel("Error")
+            self.ax3.grid(True)
+            self.ax3.set_ylim(0, 10)
+            self.ax3.set_xlim(0, 1)
+            self.im3_x = []
+            self.im3_y = []
+            self.im3 = self.ax3.plot(self.im3_x, self.im3_y, 'b')
+
+            self.im4 = self.ax4.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             
             divider1 = make_axes_locatable(self.ax)
             divider2 = make_axes_locatable(self.ax2)
@@ -1390,10 +1418,34 @@ class SwarmSimulator(arcade.Window):
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
                 self.u_fig.suptitle("Human-swarm simulation\n\n"
-                        "Time left: {}s\n".format(60-t_now_s), fontsize=16)
+                        "{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
+            
+            if self.timer > 1:
+                error = np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
+                if len(self.im3_x) > 20:
+                    self.im3_x = self.im3_x[1:]
+                    self.im3_x.append(self.timer)
+                else:
+                    self.im3_x.append(self.timer)
+
+                if len(self.im3_y) > 20:
+                    self.im3_y = self.im3_y[1:]
+                    self.im3_y.append(error)
+                else:
+                    self.im3_y.append(error)
+                    
+                self.ax3.clear()
+                self.ax3.set_title("Swarm's belief error")
+                self.ax3.set_xlabel("Time step")
+                self.ax3.set_ylabel("Error")
+                self.ax3.grid(True)
+                self.ax3.set_ylim(min(self.im3_y), max(self.im3_y))
+                self.ax3.set_xlim(self.im3_x[0], self.im3_x[-1])
+                self.ax3.plot(self.im3_x, self.im3_y, 'b')
+
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
 
@@ -1860,7 +1912,7 @@ class SwarmSimulator(arcade.Window):
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                arcade.draw_text(f"{t_now_m}m:{t_now_s}s / 1m:00 elapsed", self.ARENA_WIDTH/2,
+                arcade.draw_text(f"{t_now_m}m:{t_now_s}s", self.ARENA_WIDTH/2,
                                 self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
             else:
                 pass
@@ -1921,7 +1973,7 @@ class SwarmSimulator(arcade.Window):
 
     def on_map_click(self, event):
         if self.exp_type == "user_study_2":
-            if event.inaxes:
+            if event.inaxes == self.u_fig.axes[1]:
                 self.c_count += 1
                 x_r = 40 - math.trunc(event.xdata)
                 y_r = math.trunc(event.ydata)
@@ -1945,7 +1997,7 @@ class SwarmSimulator(arcade.Window):
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))      
             else:
                 self.u2_warning = "Only click on map areas!"
-                print("Clicked on the confidence map please!")      
+                print("Click on the confidence map please!")      
 
     def save_click_map(self):
         import csv
