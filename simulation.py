@@ -16,6 +16,7 @@ from fps_test_modules import FPSCounter
 import time as timeclock
 import datetime
 import argparse
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -1096,23 +1097,45 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study_2":
             self.u2_warning = "Click on confidence or belief map."
             # Belief Plot
-            self.belief_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 8))
+            self.belief_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 5))
+            plt.subplots_adjust(wspace=.5)
 
             self.belief_fig.suptitle("Status: Pause\n\n"
                 "Enter your name in terminal to Start! \n\n"
                     "{}s elapsed\n\n".format(0, self.run_time), fontsize=16)
             
-            self.ax.set_title("Operator's Belief Map")
+            self.ax.set_title("Disaster area")
             self.ax.set_xticks([])
             self.ax.set_yticks([])  
             
-            self.ax2.set_title("Operator's Confidence Map")
+            self.ax2.set_title("Swarm's Footrpint")
             self.ax2.set_xticks([])
             self.ax2.set_yticks([])
 
             self.belief_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
+           
+            
+            divider1 = make_axes_locatable(self.ax)
+            divider2 = make_axes_locatable(self.ax2)
+            cax1 = divider1.append_axes("right", size="5%", pad=0.05)
+            cax2 = divider2.append_axes("right", size="5%", pad=0.05)
+            
+            cb1 = plt.colorbar(self.im, cax=cax1)
+            cb2 = plt.colorbar(self.im2, cax=cax2)
+
+            cb1.set_ticks([0.01, 0.99])
+            cb1.set_ticklabels(["safe", "disaster"])
+
+            
+            cb2.set_ticks([0.01, 0.99])
+            cb2.set_ticklabels(["uncertain", "confident"])
+            
+            #cbar1.ax.set_yticklabels(['safe', 'disaster'])  # vertically oriented colorbar
+
+            #cbar2 = self.belief_fig.colorbar(self.im2, ticks=[0.01, 0.99])
+            #cbar2.ax.set_yticklabels(['uncertain', 'confident'])  # vertically oriented colorbar
 
             self.belief_fig.show()
             
@@ -1361,13 +1384,13 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study":                      
             self.im.set_array(self.operator_list[0].internal_map)
             self.belief_fig.canvas.draw()
-
+        
         if self.exp_type == "user_study_2":
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                self.belief_fig.suptitle("Status: Running\n\n"
-                        "{}s left\n".format(60-t_now_s), fontsize=16)
+                self.belief_fig.suptitle("Human-swarm simulation\n\n"
+                        "Time left: {}s\n".format(60-t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
