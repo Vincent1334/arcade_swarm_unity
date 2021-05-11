@@ -849,7 +849,7 @@ class SwarmSimulator(arcade.Window):
         
         # User-study
         if exp_type == "user_study" or "user_study_2":
-            self.u_belief = None
+            self.u_fig = None
             self.ax = None
             self.ax2 = None
             self.im = None
@@ -1087,20 +1087,20 @@ class SwarmSimulator(arcade.Window):
         
         if self.exp_type == "user_study":
             # Belief Plot
-            self.u_belief = plt.figure("Operator's Belief Map")
-            self.ax = self.u_belief.add_subplot(111)            
+            self.u_fig = plt.figure("Operator's Belief Map")
+            self.ax = self.u_fig.add_subplot(111)            
             self.ax.set_xticks([])
             self.ax.set_yticks([])        
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
-            self.u_belief.show()
+            self.u_fig.show()
     
         if self.exp_type == "user_study_2":
             self.u2_warning = "Click on confidence or belief map."
             # Belief Plot
-            self.u_belief, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 5))
+            self.u_fig, (self.ax, self.ax2) = plt.subplots(nrows=1, ncols=2,  figsize=(8, 5))
             plt.subplots_adjust(wspace=.5)
 
-            self.u_belief.suptitle("Status: Pause\n\n"
+            self.u_fig.suptitle("Status: Pause\n\n"
                 "Enter your name in terminal to Start! \n\n"
                     "{}s elapsed\n\n".format(0, self.run_time), fontsize=16)
             
@@ -1112,7 +1112,7 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_xticks([])
             self.ax2.set_yticks([])
 
-            self.u_belief.canvas.mpl_connect('button_press_event', self.on_map_click)
+            self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
            
@@ -1134,10 +1134,10 @@ class SwarmSimulator(arcade.Window):
             
             #cbar1.ax.set_yticklabels(['safe', 'disaster'])  # vertically oriented colorbar
 
-            #cbar2 = self.u_belief.colorbar(self.im2, ticks=[0.01, 0.99])
+            #cbar2 = self.u_fig.colorbar(self.im2, ticks=[0.01, 0.99])
             #cbar2.ax.set_yticklabels(['uncertain', 'confident'])  # vertically oriented colorbar
 
-            self.u_belief.show()
+            self.u_fig.show()
             
 
 
@@ -1383,19 +1383,19 @@ class SwarmSimulator(arcade.Window):
 
         if self.exp_type == "user_study":                      
             self.im.set_array(self.operator_list[0].internal_map)
-            self.u_belief.canvas.draw()
+            self.u_fig.canvas.draw()
         
         if self.exp_type == "user_study_2":
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                self.u_belief.suptitle("Human-swarm simulation\n\n"
+                self.u_fig.suptitle("Human-swarm simulation\n\n"
                         "Time left: {}s\n".format(60-t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             self.im2.set_array(self.operator_list[0].confidence_map)
-            self.u_belief.canvas.flush_events()
-            self.u_belief.canvas.draw()
+            self.u_fig.canvas.flush_events()
+            self.u_fig.canvas.draw()
 
         # # To refresh the communications in drones
         # for drone in self.drone_list:
