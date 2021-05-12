@@ -1124,7 +1124,7 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_xticks([])
             self.ax2.set_yticks([])
 
-            self.ax3.set_title("Your performance")
+            self.ax3.set_title("Mapping precision")
             self.ax3.grid(True)
             
             self.ax4.set_title("Mission Zone at t=0s")
@@ -1136,7 +1136,7 @@ class SwarmSimulator(arcade.Window):
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
 
             #self.ax3.set_title("Your performance")
-            self.ax3.set_xlabel("Time step")
+            self.ax3.set_xlabel("Time (s)")
             self.ax3.set_ylabel("Error")
             self.ax3.grid(True)
             self.ax3.set_ylim(0, 10)
@@ -1144,7 +1144,7 @@ class SwarmSimulator(arcade.Window):
             self.im3_x = []
             self.im3_y = []
             self.im3 = self.ax3.plot(self.im3_x, self.im3_y, 'b')
-            
+            #self.ax3.set_size_inches(2, 2)
             #self.im4 = self.ax4.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             img4 = mpimg.imread(str(pathlib.Path().absolute())+'/images/disaster_scr.png')
             self.im4 = self.ax4.imshow(img4)
@@ -1421,7 +1421,7 @@ class SwarmSimulator(arcade.Window):
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                self.u_fig.suptitle("Human-swarm simulation\n\n"
+                self.u_fig.suptitle("''Click anywhere in maps to lead the swarm ''\n\n"
                         "{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
@@ -1443,15 +1443,15 @@ class SwarmSimulator(arcade.Window):
                     self.im3_y.append(error)
                 '''
                 self.im3_y.append(error)
-                self.im3_x.append(self.timer)
+                self.im3_x.append(self.timer/4)
    
                 self.ax3.clear()
-                self.ax3.set_title("Your performance")
-                self.ax3.set_xlabel("Time step")
+                self.ax3.set_title("Mapping precision")
+                self.ax3.set_xlabel("Time (s)")
                 self.ax3.set_ylabel("Error")
                 self.ax3.grid(True)
-                self.ax3.set_ylim(min(self.im3_y), max(self.im3_y))
-                self.ax3.set_xlim(self.im3_x[0], self.im3_x[-1])
+                self.ax3.set_ylim(0, max(self.im3_y))
+                self.ax3.set_xlim(0, self.im3_x[-1])
                 self.ax3.plot(self.im3_x, self.im3_y, 'b')
 
             self.u_fig.canvas.flush_events()
