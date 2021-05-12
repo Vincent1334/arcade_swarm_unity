@@ -18,6 +18,8 @@ import time as timeclock
 import datetime
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.image as mpimg
+import pathlib
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -1122,10 +1124,10 @@ class SwarmSimulator(arcade.Window):
             self.ax2.set_xticks([])
             self.ax2.set_yticks([])
 
-            self.ax3.set_title("Swarm's belief error")
+            self.ax3.set_title("Your performance")
             self.ax3.grid(True)
             
-            self.ax4.set_title("To be set")
+            self.ax4.set_title("Mission Zone at t=0s")
             self.ax4.set_xticks([])
             self.ax4.set_yticks([])
             
@@ -1133,7 +1135,7 @@ class SwarmSimulator(arcade.Window):
             self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
 
-            self.ax3.set_title("Swarm's belief error")
+            #self.ax3.set_title("Your performance")
             self.ax3.set_xlabel("Time step")
             self.ax3.set_ylabel("Error")
             self.ax3.grid(True)
@@ -1142,8 +1144,10 @@ class SwarmSimulator(arcade.Window):
             self.im3_x = []
             self.im3_y = []
             self.im3 = self.ax3.plot(self.im3_x, self.im3_y, 'b')
-
-            self.im4 = self.ax4.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
+            
+            #self.im4 = self.ax4.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
+            img4 = mpimg.imread(str(pathlib.Path().absolute())+'/images/disaster_scr.png')
+            self.im4 = self.ax4.imshow(img4)
             
             divider1 = make_axes_locatable(self.ax)
             divider2 = make_axes_locatable(self.ax2)
@@ -1158,7 +1162,7 @@ class SwarmSimulator(arcade.Window):
 
             
             cb2.set_ticks([0.01, 0.99])
-            cb2.set_ticklabels(["uncertain", "confident"])
+            cb2.set_ticklabels(["sparse", "dense"])
             
             #cbar1.ax.set_yticklabels(['safe', 'disaster'])  # vertically oriented colorbar
 
@@ -1438,7 +1442,7 @@ class SwarmSimulator(arcade.Window):
                     self.im3_y.append(error)
                     
                 self.ax3.clear()
-                self.ax3.set_title("Swarm's belief error")
+                self.ax3.set_title("Your performance")
                 self.ax3.set_xlabel("Time step")
                 self.ax3.set_ylabel("Error")
                 self.ax3.grid(True)
