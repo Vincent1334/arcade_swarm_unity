@@ -1429,6 +1429,7 @@ class SwarmSimulator(arcade.Window):
             
             if self.timer > 1:
                 error = np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
+                '''
                 if len(self.im3_x) > 20:
                     self.im3_x = self.im3_x[1:]
                     self.im3_x.append(self.timer)
@@ -1440,7 +1441,10 @@ class SwarmSimulator(arcade.Window):
                     self.im3_y.append(error)
                 else:
                     self.im3_y.append(error)
-                    
+                '''
+                self.im3_y.append(error)
+                self.im3_x.append(self.timer)
+   
                 self.ax3.clear()
                 self.ax3.set_title("Your performance")
                 self.ax3.set_xlabel("Time step")
