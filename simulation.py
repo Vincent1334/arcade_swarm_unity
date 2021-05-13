@@ -20,6 +20,8 @@ import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.image as mpimg
 import pathlib
+import cv2
+from PIL import Image as im
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -1425,7 +1427,25 @@ class SwarmSimulator(arcade.Window):
                         "{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
-            self.im2.set_array(self.operator_list[0].confidence_map)
+            #self.im2.set_array(self.operator_list[0].confidence_map)
+            
+            #smooth footprint
+            #img = cv2.imread('opencv_logo.png')
+            #img = im.fromarray(self.operator_list[0].confidence_map)
+            gen = np.array(self.operator_list[0].confidence_map)
+            #gen = np.true_divide(gen, 4)
+
+            #2D convolution
+            #kernel = np.ones((5,5),np.float32)/25
+            #dst = cv2.filter2D(gen,-1,kernel)
+            #self.im2 = self.ax2.imshow(dst)
+
+            
+            
+            #Gaussian Flitering
+            ret,thresh1 = cv2.threshold(gen,0.95,1,cv2.THRESH_BINARY)
+            blur = cv2.GaussianBlur(thresh1,(11,11),0)
+            self.im2 = self.ax2.imshow(blur)
             
             if self.timer > 1:
                 error = np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
