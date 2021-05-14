@@ -213,6 +213,7 @@ class Agent(Object):
         coeff = 0
         ################################# 
 
+        #one of the drones has very HIGH confidence 
         b_a_mask = np.bitwise_and(agent.confidence_map > 0.8, agent.confidence_map > self.confidence_map)
         np.putmask(self.internal_map, b_a_mask, agent.reliability * agent.internal_map + coeff * self.communication_noise)
         np.putmask(self.confidence_map, b_a_mask, agent.confidence_map + coeff * self.communication_noise)
@@ -221,14 +222,16 @@ class Agent(Object):
         np.putmask(agent.internal_map, b_s_mask, self.reliability * self.internal_map + coeff * self.communication_noise)
         np.putmask(agent.confidence_map, b_s_mask, self.confidence_map + coeff * self.communication_noise)
         
+        #one of the drones has very LOW confidence 
         l_a_mask = np.bitwise_and(agent.confidence_map < 0, agent.confidence_map < self.confidence_map)
-        np.putmask(self.internal_map, l_a_mask, agent.reliability * agent.internal_map + coeff * self.communication_noise)
-        np.putmask(self.confidence_map, l_a_mask, agent.confidence_map + coeff * self.communication_noise)
+        np.putmask(agent.internal_map, l_a_mask, agent.reliability * agent.internal_map + coeff * self.communication_noise)
+        np.putmask(agent.confidence_map, l_a_mask, agent.confidence_map + coeff * self.communication_noise)
         
         l_s_mask = np.bitwise_and(self.confidence_map < 0, agent.confidence_map > self.confidence_map)
-        np.putmask(agent.internal_map, l_s_mask, self.reliability * self.internal_map + coeff * self.communication_noise)
-        np.putmask(agent.confidence_map, l_s_mask, self.confidence_map + coeff * self.communication_noise)
+        np.putmask(self.internal_map, l_s_mask, self.reliability * self.internal_map + coeff * self.communication_noise)
+        np.putmask(self.confidence_map, l_s_mask, self.confidence_map + coeff * self.communication_noise)
         
+        #AVG confidence 
         ll_a_mask = np.bitwise_or(self.confidence_map < 0.8, self.confidence_map > 0.8)
         np.putmask(agent.internal_map, ll_a_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
         np.putmask(agent.confidence_map, ll_a_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
@@ -236,8 +239,7 @@ class Agent(Object):
         ll_s_mask = np.bitwise_or(agent.internal_map < 0.8, agent.internal_map > 0)
         np.putmask(self.internal_map, ll_s_mask, (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask, (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise)
-        
-        # for j in range(self.simulation.GRID_X):
+                # for j in range(self.simulation.GRID_X):
         #     for i in range(self.simulation.GRID_Y):
         #         agent_confidence = agent.confidence_map[i][j]
         #         agent_belief = agent.internal_map[i][j]
@@ -316,8 +318,9 @@ class Human(Agent):
     
     def update(self, gp_operator = False):
 
-
+		#aging drone's maps
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
+        self.confidence_map [(self.confidence_map > -0.001) & (self.confidence_map < 0)] = 0.001
         self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
         
         '''
@@ -723,9 +726,11 @@ class Drone(Agent):
         self.grid_pos_y = int(np.trunc(((1-self.center_y / self.simulation.ARENA_HEIGHT) * (self.simulation.GRID_Y - 1))))
         
     def update_confidence_and_belief(self):		 
+        #aging drone's maps
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
-        #self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
-        
+        self.confidence_map [(self.confidence_map > -0.001) & (self.confidence_map < 0)] = 0.001
+        self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
+  
         for j in range(self.grid_pos_x - int(self.simulation.BOUDARY_DIAMETER/2), self.grid_pos_x + int(self.simulation.BOUDARY_DIAMETER/2) + 1):    
             for k in range(self.grid_pos_y - int(self.simulation.BOUDARY_DIAMETER/2), self.grid_pos_y + int(self.simulation.BOUDARY_DIAMETER/2) + 1):
                   
@@ -1353,7 +1358,39 @@ class SwarmSimulator(arcade.Window):
                  distances.append(int(math.sqrt(dx*dx + dy*dy)))
 
          return collections.Counter(distances)
-            
+    
+    '''
+    def get_precision(self):
+
+        #old way: np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
+        
+        size = self.ARENA_WIDTH, self.ARENA_HEIGHT
+        #belief_map_high_res = im.fromarray(self.operator_list[0].internal_map, 'RGB')        
+        array = 255 - self.operator_list[0].internal_map*255
+        array = array.astype('uint8')	
+        image = im.fromarray(array)
+
+        image_high_res = image.resize(size, im.ANTIALIAS)
+        
+        image_high_res.save("my_image_resized.png", "PNG")
+        
+        
+        screen_original = arcade.draw_commands.get_image(x=0, y=0, width=None, height=None)
+        
+        screen_gray = screen_original.convert('LA')
+        
+        threshold = 191  
+        screen_threshold = screen_gray.point(lambda p: p > threshold and 255)  
+        
+        #ret,thresh1 = cv2.threshold(gen,0.95,1,cv2.THRESH_BINARY)
+        
+        #image = get_image()
+        screen_threshold.save('screenshot.png', 'PNG')
+        
+        return 0
+        #array = np.reshape(self.operator_list[0].internal_map, (self.ARENA_WIDTH, self.ARENA_HEIGHT))
+                
+    '''             
     def on_update(self, delta_time):
         if self.timer == 2:
             self.w_time = delta_time
@@ -1447,7 +1484,7 @@ class SwarmSimulator(arcade.Window):
             #dst = cv2.filter2D(gen,-1,kernel)
             #self.im2 = self.ax2.imshow(dst)
 
-            
+            #self.im2 = self.ax2.imshow(gen, interpolation='quadric') 
             
             #Gaussian Flitering
             ret,thresh1 = cv2.threshold(gen,0.95,1,cv2.THRESH_BINARY)
@@ -1903,7 +1940,7 @@ class SwarmSimulator(arcade.Window):
                         for j in range(self.GRID_X):                    
                             r = np.sqrt((i-x_grid)**2 + (j-y_grid)**2)                    
                             r = 1 - r/(self.GRID_X/2)                    
-                            self.picked_drone.confidence_map[j][self.GRID_X-1-i] = self.picked_drone.confidence_map[j][self.GRID_X-1-i] - 2 * r    
+                            self.picked_drone.confidence_map[j][self.GRID_X-1-i] = self.picked_drone.confidence_map[j][self.GRID_X-1-i] - r/2    
                              
                     print("{} to position ({},{})".format(self.picked_drone.name.title(), x_grid, y_grid))
                     # self.display_selected_drone_info(self.picked_drone)
@@ -2018,7 +2055,7 @@ class SwarmSimulator(arcade.Window):
                     for j in range(self.GRID_X):                    
                         r = np.sqrt((i-x_r)**2 + (j-y_r)**2)                    
                         r = 1 - r/(self.GRID_X/2)                    
-                        self.operator_list[0].confidence_map[j][self.GRID_X-1-i] = self.operator_list[0].confidence_map[j][self.GRID_X-1-i] - 2 * r    
+                        self.operator_list[0].confidence_map[j][self.GRID_X-1-i] = self.operator_list[0].confidence_map[j][self.GRID_X-1-i] - r/2    
                 
                 c_i = None
                 for click in self.click_map:
