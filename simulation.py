@@ -1118,7 +1118,7 @@ class SwarmSimulator(arcade.Window):
                 "Enter your name in terminal to Start! \n\n"
                     "{}s elapsed\n\n".format(0, self.run_time), fontsize=16)
             
-            # self.ax.set_title("Disaster area")
+            self.ax.set_title("Disaster area")
             self.ax.set_xticks([])
             self.ax.set_yticks([])  
             
@@ -1134,16 +1134,18 @@ class SwarmSimulator(arcade.Window):
             self.ax4.set_yticks([])
             
             self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
-            self.im = self.ax.imshow(np.random.rand(40, 40), cmap='Blues', interpolation='nearest')
-
-            img = plt.imread('images/disaster_scr.png')
-            ax_image = self.u_fig.add_axes(self.ax.get_position().bounds)
-            ax_image.imshow(img, alpha=0.3, aspect='auto')
-            ax_image.set_axis_off()
             
-            ax_image2 = self.u_fig.add_axes(ax_image.get_position().bounds)
-            ax_image2.set_title("Disaster area")
-            ax_image2.set_axis_off()
+            img = plt.imread('images/disaster_scr.png')
+            self.ax.imshow(img)
+            self.ax.set_axis_off()
+
+            self.ax_image = self.u_fig.add_axes(self.ax.get_position().bounds)
+            self.im = self.ax_image.imshow(np.random.rand(40, 40), alpha=0.5, cmap='Blues', aspect='auto')
+            self.ax_image.set_axis_off()
+            
+            # ax_image2 = self.u_fig.add_axes(ax_image.get_position().bounds)
+            # ax_image2.set_title("Disaster area")
+            # ax_image2.set_axis_off()
 
             self.im2 = self.ax2.imshow(np.random.rand(40, 40), interpolation='nearest')
 
@@ -1159,9 +1161,10 @@ class SwarmSimulator(arcade.Window):
             img4 = mpimg.imread(str(pathlib.Path().absolute())+'/images/disaster_scr.png')
             self.im4 = self.ax4.imshow(img4)
             
-            divider1 = make_axes_locatable(ax_image2)
+            divider1 = make_axes_locatable(self.ax_image)
             divider2 = make_axes_locatable(self.ax2)
-            cax1 = divider1.append_axes("right", size="5%", pad=0.05)
+            
+            cax1 = divider1.append_axes("right", size="5%", pad=0)
             cax2 = divider2.append_axes("right", size="5%", pad=0.05)
             
             cb1 = plt.colorbar(self.im, cax=cax1)
@@ -1173,7 +1176,7 @@ class SwarmSimulator(arcade.Window):
             cb2.set_ticks([0.01, 0.99])
             cb2.set_ticklabels(["sparse", "dense"])
             
-            #cbar1.ax.set_yticklabels(['safe', 'disaster'])  # vertically oriented colorbar
+            # cbar1.ax.set_yticklabels(['safe', 'disaster'])  # vertically oriented colorbar
 
             #cbar2 = self.u_fig.colorbar(self.im2, ticks=[0.01, 0.99])
             #cbar2.ax.set_yticklabels(['uncertain', 'confident'])  # vertically oriented colorbar
@@ -1479,7 +1482,7 @@ class SwarmSimulator(arcade.Window):
                 self.ax3.grid(True)
                 self.ax3.set_ylim(0, max(self.im3_y))
                 self.ax3.set_xlim(0, self.im3_x[-1])
-                self.ax3.plot(self.im3_x, self.im3_y, 'b')
+                self.ax3.plot(self.im3_x, self.im3_y, 'b', scaley=True)
 
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
