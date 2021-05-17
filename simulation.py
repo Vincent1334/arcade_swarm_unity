@@ -1123,20 +1123,23 @@ class SwarmSimulator(arcade.Window):
                 "Enter your name in terminal to Start! \n\n"
                     "{}s elapsed\n\n".format(self.run_time), fontsize=16)
             
+            self.axes[0,0]= plt.subplot(221)
             self.axes[0,0].set_title("Disaster area")
             self.axes[0,0].set_xticks([])
             self.axes[0,0].set_yticks([])  
             
+            self.axes[0,1]= plt.subplot(222)
             self.axes[0,1].set_title("Swarm's Footrpint")
             self.axes[0,1].set_xticks([])
             self.axes[0,1].set_yticks([])
 
+            self.axes[1,0] = plt.subplot(212)
             self.axes[1,0].set_title("Mapping precision")
             self.axes[1,0].grid(True)
             
-            self.axes[1,1].set_title("Mission Zone at t=0s")
-            self.axes[1,1].set_xticks([])
-            self.axes[1,1].set_yticks([])
+            #self.axes[1,1].set_title("Mission Zone at t=0s")
+            #self.axes[1,1].set_xticks([])
+            #self.axes[1,1].set_yticks([])
             
             self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             
@@ -1148,7 +1151,7 @@ class SwarmSimulator(arcade.Window):
             self.im = self.ax_image.imshow(np.random.rand(40, 40), alpha=0.5, cmap='Blues', aspect='auto')
             self.ax_image.set_axis_off()
 
-            self.im2 = self.axes[0,1].imshow(np.random.rand(40, 40), interpolation='nearest')
+            self.im2 = self.axes[0,1].imshow(np.random.rand(40, 40))#, interpolation='nearest')
 
             self.axes[1,0].set_xlabel("Time (s)")
             self.axes[1,0].set_ylabel("Error")
@@ -1181,7 +1184,7 @@ class SwarmSimulator(arcade.Window):
             self.threshhold_v = 0.5
             
             self.ax_slider = divider2.append_axes("bottom", size="5%", pad=0.09)
-            thresh_s = Slider(self.ax_slider, 'Threshhold', 0, 1, valinit=0.5)
+            thresh_s = Slider(self.ax_slider, 'Threshold', 0, 1, valinit=0.5)
 
             def s_update(val):
                 th_v = thresh_s.val
@@ -1497,6 +1500,8 @@ class SwarmSimulator(arcade.Window):
             ret,thresh1 = cv2.threshold(gen,self.threshhold_v,1,cv2.THRESH_BINARY)
             blur = cv2.GaussianBlur(thresh1,(11,11),0)
             self.im2 = self.axes[0,1].imshow(blur)
+            
+            #self.im2 = self.axes[0,1].imshow(gen)
             
             if self.timer > 1:
                 error = np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
