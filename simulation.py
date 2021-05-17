@@ -16,7 +16,7 @@ import datetime
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.image as mpimg
-from matplotlib.widgets import Slider, Button, RadioButtons
+from matplotlib.widgets import Slider
 import pathlib
 import cv2
 from PIL import Image as im
@@ -870,9 +870,6 @@ class SwarmSimulator(arcade.Window):
             self.im2 = None
             self.im3 = None
             self.im4 = None
-            self.click_im = None
-            self.click_data = None
-            self.threshhold_v = None
             
             self.im3_x = []
             self.im3_y = []
@@ -1119,12 +1116,12 @@ class SwarmSimulator(arcade.Window):
         if self.exp_type == "user_study_2":
             self.u2_warning = "Click on confidence or belief map."
             # Belief Plot
-            self.u_fig, self.axes = plt.subplots(nrows=3, ncols=2,  figsize=(8, 8))
+            self.u_fig, self.axes = plt.subplots(nrows=2, ncols=2,  figsize=(8, 8))
             plt.subplots_adjust(wspace=.5)
 
             self.u_fig.suptitle("Status: Pause\n\n"
                 "Enter your name in terminal to Start! \n\n"
-                    "{}s elapsed\n\n".format(0, self.run_time), fontsize=16)
+                    "{}s elapsed\n\n".format(self.run_time), fontsize=16)
             
             self.axes[0,0].set_title("Disaster area")
             self.axes[0,0].set_xticks([])
@@ -1134,22 +1131,12 @@ class SwarmSimulator(arcade.Window):
             self.axes[0,1].set_xticks([])
             self.axes[0,1].set_yticks([])
 
-            self.axes[2,0].set_title("Mapping precision")
-            self.axes[2,0].grid(True)
+            self.axes[1,0].set_title("Mapping precision")
+            self.axes[1,0].grid(True)
             
-            self.axes[2,1].set_title("Mission Zone at t=0s")
-            self.axes[2,1].set_xticks([])
-            self.axes[2,1].set_yticks([])
-            
-            for ax in self.axes[1, :2]:
-                ax.remove()
-            gs = self.axes[1,0].get_gridspec()
-            self.click_p = self.u_fig.add_subplot(gs[1, :2])
-            self.click_p.set_title("Click Map")
-            self.click_p.set_xticks([])
-            self.click_p.set_yticks([])
-            self.click_data = np.array([[0.0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)])
-            self.click_im = self.click_p.imshow(np.random.rand(40, 40), cmap='Blues', aspect='auto')
+            self.axes[1,1].set_title("Mission Zone at t=0s")
+            self.axes[1,1].set_xticks([])
+            self.axes[1,1].set_yticks([])
             
             self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             
@@ -1163,17 +1150,17 @@ class SwarmSimulator(arcade.Window):
 
             self.im2 = self.axes[0,1].imshow(np.random.rand(40, 40), interpolation='nearest')
 
-            self.axes[2,0].set_xlabel("Time (s)")
-            self.axes[2,0].set_ylabel("Error")
-            self.axes[2,0].grid(True)
-            self.axes[2,0].set_ylim(0, 10)
-            self.axes[2,0].set_xlim(0, 1)
+            self.axes[1,0].set_xlabel("Time (s)")
+            self.axes[1,0].set_ylabel("Error")
+            self.axes[1,0].grid(True)
+            self.axes[1,0].set_ylim(0, 10)
+            self.axes[1,0].set_xlim(0, 1)
             self.im3_x = []
             self.im3_y = []
-            self.im3 = self.axes[2,0].plot(self.im3_x, self.im3_y, 'b')
+            self.im3 = self.axes[1,0].plot(self.im3_x, self.im3_y, 'b')
             
             img4 = mpimg.imread(str(pathlib.Path().absolute())+'/images/disaster_scr.png')
-            self.im4 = self.axes[2,1].imshow(img4)
+            self.im4 = self.axes[1,1].imshow(img4)
             
             divider1 = make_axes_locatable(self.ax_image)
             divider2 = make_axes_locatable(self.axes[0,1])
@@ -1529,17 +1516,14 @@ class SwarmSimulator(arcade.Window):
                 self.im3_y.append(error)
                 self.im3_x.append(self.timer/4)
    
-                self.axes[2,0].clear()
-                self.axes[2,0].set_title("Mapping precision")
-                self.axes[2,0].set_xlabel("Time (s)")
-                self.axes[2,0].set_ylabel("Error")
-                self.axes[2,0].grid(True)
-                self.axes[2,0].set_ylim(0, max(self.im3_y))
-                self.axes[2,0].set_xlim(0, self.im3_x[-1])
-                self.axes[2,0].plot(self.im3_x, self.im3_y, 'b', scaley=True)
-                
-                self.click_data *= self.LOSING_CONFIDENCE_RATE
-                self.click_im.set_array(self.click_data)
+                self.axes[1,0].clear()
+                self.axes[1,0].set_title("Mapping precision")
+                self.axes[1,0].set_xlabel("Time (s)")
+                self.axes[1,0].set_ylabel("Error")
+                self.axes[1,0].grid(True)
+                self.axes[1,0].set_ylim(0, max(self.im3_y))
+                self.axes[1,0].set_xlim(0, self.im3_x[-1])
+                self.axes[1,0].plot(self.im3_x, self.im3_y, 'b', scaley=True)
 
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
@@ -2089,7 +2073,6 @@ class SwarmSimulator(arcade.Window):
                 else:
                     self.click_map.append((1, x_r, y_r))
                 
-                self.click_data[math.trunc(event.ydata), math.trunc(event.xdata)] = 1
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))      
             else:
                 self.u2_warning = "Only click on map areas!"
