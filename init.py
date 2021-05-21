@@ -142,39 +142,43 @@ def init(SWARM_SIZE = 15, ARENA_WIDTH = 600, ARENA_HEIGHT = 600, name_of_experim
         if exp_type == "user_study_2":
             sim.set_visible(False)
 
-        arcade.run()              
-        # cProfile.run('arcade.run()')    
-        
-        
-        #sim.plot_heatmaps(sim.random_drone_confidence_maps, 'Random drone confidence')
-        #sim.plot_heatmaps(sim.random_drone_belief_maps, 'Random drone belief')
-        
-        #sim.plot_boxplots(sim.swarm_confidence, 'Swarm confidence over time')
-        #sim.plot_boxplots(sim.swarm_internal_error, 'Swarm belief map error over time')
-        
-        #sim.plot_heatmaps(sim.operator_confidence_maps, 'Operator confidence')
-        #sim.plot_heatmaps(sim.operator_belief_maps, 'Operator belief')
-        
-        #sim.plot_boxplots(sim.operator_confidence, 'Operator confidence over time')
-        #sim.plot_boxplots(sim.operator_internal_error, 'Operator belief map error over time')
-        
-        sim.save_positions(sim, directory)
-        sim.save_boxplots(sim.swarm_confidence, 'confidence_time', directory)
-        sim.save_boxplots(sim.swarm_internal_error, 'belief_error', directory)
+        try:
+            arcade.run()              
+            # cProfile.run('arcade.run()')    
+            
+            
+            #sim.plot_heatmaps(sim.random_drone_confidence_maps, 'Random drone confidence')
+            #sim.plot_heatmaps(sim.random_drone_belief_maps, 'Random drone belief')
+            
+            #sim.plot_boxplots(sim.swarm_confidence, 'Swarm confidence over time')
+            #sim.plot_boxplots(sim.swarm_internal_error, 'Swarm belief map error over time')
+            
+            #sim.plot_heatmaps(sim.operator_confidence_maps, 'Operator confidence')
+            #sim.plot_heatmaps(sim.operator_belief_maps, 'Operator belief')
+            
+            #sim.plot_boxplots(sim.operator_confidence, 'Operator confidence over time')
+            #sim.plot_boxplots(sim.operator_internal_error, 'Operator belief map error over time')
+            
+            sim.save_positions(sim, directory)
+            sim.save_boxplots(sim.swarm_confidence, 'confidence_time', directory)
+            sim.save_boxplots(sim.swarm_internal_error, 'belief_error', directory)
 
-        sim.save_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
-        sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
-        sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
-        
-        # Saving images of plots
-        if not os.path.isdir(directory + '/map_images'):
-            os.makedirs(directory + '/map_images')
-        sim.save_image_plot_heatmaps(sim.operator_confidence_maps, 'operator confidence', directory)
-        sim.save_image_plot_heatmaps(sim.operator_belief_maps, 'operator belief', directory)
+            sim.save_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
+            sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
+            sim.save_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
+            
+            # Saving images of plots
+            if not os.path.isdir(directory + '/map_images'):
+                os.makedirs(directory + '/map_images')
+            sim.save_image_plot_heatmaps(sim.operator_confidence_maps, 'operator confidence', directory)
+            sim.save_image_plot_heatmaps(sim.operator_belief_maps, 'operator belief', directory)
 
-        sim.save_image_plot_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
-        sim.save_image_plot_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
-        print('END')
+            sim.save_image_plot_boxplots(sim.operator_confidence, 'operator_confidence_time', directory)
+            sim.save_image_plot_boxplots(sim.operator_internal_error, 'operator_belief_error', directory)
+            print('END')
+            
+        except KeyboardInterrupt:
+            print("Arcade stopped on user request.")
 
 def merge(list1, list2):       
     merged_list = [] 

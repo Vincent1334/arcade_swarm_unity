@@ -272,4 +272,7 @@ if __name__ == "__main__":
             procs.append(proc)       
     
     for proc in procs:
-        proc.wait()        
+        try:
+            proc.wait()   
+        except KeyboardInterrupt:
+            print("Subprocess Ended!")     

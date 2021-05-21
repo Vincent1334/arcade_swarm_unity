@@ -874,6 +874,8 @@ class SwarmSimulator(arcade.Window):
             self.im3_x = []
             self.im3_y = []
             
+            self.annotes = []
+            
             # drones
             self.picked_drone = None
             
@@ -1195,8 +1197,6 @@ class SwarmSimulator(arcade.Window):
             
             self.u_fig.show()
             
-
-
     def log_setup(self, directory = None):
         if directory == None:      
             log = open("log_setup.txt", "a")
@@ -1529,6 +1529,10 @@ class SwarmSimulator(arcade.Window):
                 self.axes[1,0].set_ylim(0, max(self.im3_y))
                 self.axes[1,0].set_xlim(0, self.im3_x[-1])
                 self.axes[1,0].plot(self.im3_x, self.im3_y, 'b', scaley=True)
+                
+                for a in self.annotes:
+                    a[0].set_alpha(a[1] * 0.9)
+                    a[1] = a[1] * 0.9
 
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
@@ -2077,6 +2081,10 @@ class SwarmSimulator(arcade.Window):
                     self.click_map[c_i] = (self.click_map[c_i][0] + 1, x_r, y_r)
                 else:
                     self.click_map.append((1, x_r, y_r))
+                    
+                annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata), math.trunc(event.ydata)), 
+                                                     color="red", fontsize=10)
+                self.annotes.append([annotation, 1])
                 
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))      
             else:
