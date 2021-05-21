@@ -875,6 +875,7 @@ class SwarmSimulator(arcade.Window):
             self.im3_y = []
             
             self.annotes = []
+            self.thresh_s = None
             
             # drones
             self.picked_drone = None
@@ -1186,16 +1187,15 @@ class SwarmSimulator(arcade.Window):
             self.threshhold_v = 0.5
             
             self.ax_slider = divider2.append_axes("bottom", size="5%", pad=0.09)
-            thresh_s = Slider(self.ax_slider, 'Threshold', 0, 1, valinit=0.5)
-
-            def s_update(val):
-                th_v = thresh_s.val
-                self.threshhold_v = th_v
-                self.u_fig.canvas.draw_idle()
-                
-            thresh_s.on_changed(s_update)
+            self.thresh_s = Slider(self.ax_slider, 'Threshold', 0, 1, valinit=0.5)
+            self.thresh_s.on_changed(self.s_update)
             
             self.u_fig.show()
+            
+    def s_update(self, val):
+        th_v = self.thresh_s.val
+        self.threshhold_v = th_v
+        self.u_fig.canvas.draw_idle()
             
     def log_setup(self, directory = None):
         if directory == None:      
@@ -2082,7 +2082,7 @@ class SwarmSimulator(arcade.Window):
                 else:
                     self.click_map.append((1, x_r, y_r))
                     
-                annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata), math.trunc(event.ydata)), 
+                annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), 
                                                      color="red", fontsize=10)
                 self.annotes.append([annotation, 1])
                 
