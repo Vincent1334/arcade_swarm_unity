@@ -16,11 +16,13 @@ import datetime
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.image as mpimg
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, Button
+from matplotlib.patches import Rectangle
 import pathlib
 import cv2
 from PIL import Image as im
 import warnings
+from c_widgets import Annotate
 
 warnings.filterwarnings("ignore")
 
@@ -864,6 +866,7 @@ class SwarmSimulator(arcade.Window):
             
             self.ax = None
             self.axes = None
+            self.p_ax = None
             self.click_p = None
             
             self.im = None
@@ -886,6 +889,16 @@ class SwarmSimulator(arcade.Window):
             self.click_map = []
             self.u_timer = 0
             self.w_time = 0
+            
+            # Menu
+            self.c_button = None
+            self.c_button_txt = None
+
+            # Rectangle Selector
+            self.r_selector = None
+            self.s_areas = []
+            self.s_rects = []
+            
             
             # U2 Warning
             self.u2_warning = None
@@ -1122,9 +1135,7 @@ class SwarmSimulator(arcade.Window):
             self.u_fig, self.axes = plt.subplots(nrows=2, ncols=2,  figsize=(8, 8))
             plt.subplots_adjust(wspace=.5)
 
-            self.u_fig.suptitle("Status: Pause\n\n"
-                "Enter your name in terminal to Start! \n\n"
-                    "{}s elapsed\n\n".format(self.run_time), fontsize=16)
+            self.u_fig.suptitle("{}s elapsed\n\n".format(self.run_time), fontsize=16)
             
             self.axes[0,0]= plt.subplot(221)
             self.axes[0,0].set_title("Disaster area")
@@ -1135,14 +1146,13 @@ class SwarmSimulator(arcade.Window):
             self.axes[0,1].set_title("Swarm's Footrpint")
             self.axes[0,1].set_xticks([])
             self.axes[0,1].set_yticks([])
+            
+            # Rectangle Selector
+            self.r_selector = Annotate(self.axes[0,1], self.s_areas, self.s_rects)
 
             self.axes[1,0] = plt.subplot(212)
             self.axes[1,0].set_title("Mapping precision")
             self.axes[1,0].grid(True)
-            
-            #self.axes[1,1].set_title("Mission Zone at t=0s")
-            #self.axes[1,1].set_xticks([])
-            #self.axes[1,1].set_yticks([])
             
             self.u_fig.canvas.mpl_connect('button_press_event', self.on_map_click)
             
@@ -1189,6 +1199,30 @@ class SwarmSimulator(arcade.Window):
             self.ax_slider = divider2.append_axes("bottom", size="5%", pad=0.09)
             self.thresh_s = Slider(self.ax_slider, 'Threshold', 0, 1, valinit=0.5)
             self.thresh_s.on_changed(self.s_update)
+            
+            # Toggle button
+            def c_button_action(event):
+                if self.c_button_txt == "Real Environment":
+                    self.axes[1,0].set_visible(False)
+                    self.p_ax.set_visible(True)
+                    self.c_button.label.set_text("Simulated Environment")
+                    self.c_button_txt = "Simulated Environment"
+                else:
+                    self.p_ax.set_visible(False)
+                    self.axes[1,0].set_visible(True)
+                    self.c_button.label.set_text("Real Environment")
+                    self.c_button_txt = "Real Environment"
+            
+            # Environment Button
+            btn_ax = self.u_fig.add_axes([0.4,0.9,0.22,0.03])
+            self.c_button = Button(btn_ax, 'Real Environment')
+            self.c_button_txt = "Real Environment"
+            self.c_button.on_clicked(c_button_action)
+            
+            # Place holder ax
+            self.p_ax = self.u_fig.add_axes(self.axes[1,0].get_position().bounds)
+            Button(self.p_ax, 'Map Not Available')
+            self.p_ax.set_visible(False)
             
             self.u_fig.show()
             
@@ -1477,8 +1511,7 @@ class SwarmSimulator(arcade.Window):
             if self.timer > 1:
                 t_now_s = int(self.u_timer) % 60
                 t_now_m = int(self.u_timer) // 60
-                self.u_fig.suptitle("''Click anywhere in maps to lead the swarm ''\n\n"
-                        "{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
+                self.u_fig.suptitle("{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
             self.im.set_array(self.operator_list[0].internal_map)
             #self.im2.set_array(self.operator_list[0].confidence_map)
@@ -1530,13 +1563,27 @@ class SwarmSimulator(arcade.Window):
                 self.axes[1,0].set_xlim(0, self.im3_x[-1])
                 self.axes[1,0].plot(self.im3_x, self.im3_y, 'b', scaley=True)
                 
-                for a in self.annotes:
-                    a[0].set_alpha(a[1] * 0.9)
-                    a[1] = a[1] * 0.9
+                # for a in self.annotes:
+                #     a[0].set_alpha(a[1] * 0.9)
+                #     a[1] = a[1] * 0.9
 
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
+            
+            for rect in self.s_areas:
+                if rect[4] == "appended":
+                    rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
+                    self.s_rects.append([rectangle, "appended"])
+                    rect[4] = "plotted"
+                    
+            time.sleep(1) 
+            for rec in self.s_rects:
+                if rec[1] == "appended":
+                    self.axes[0,1].add_patch(rec[0])
+                    rec[1] = "plotted"
 
+            print(self.s_areas)
+            
         # # To refresh the communications in drones
         # for drone in self.drone_list:
         #     drone.have_communicated = False
@@ -2082,9 +2129,9 @@ class SwarmSimulator(arcade.Window):
                 else:
                     self.click_map.append((1, x_r, y_r))
                     
-                annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), 
-                                                     color="red", fontsize=10)
-                self.annotes.append([annotation, 1])
+                # annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), 
+                #                                      color="red", fontsize=10)
+                # self.annotes.append([annotation, 1])
                 
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))      
             else:
