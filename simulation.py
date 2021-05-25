@@ -1513,6 +1513,17 @@ class SwarmSimulator(arcade.Window):
                 t_now_m = int(self.u_timer) // 60
                 self.u_fig.suptitle("{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
+                for rect in self.s_areas:
+                    if rect[4] == "appended":
+                        rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
+                        self.s_rects.append([rectangle, "appended"])
+                        rect[4] = "plotted"
+                    
+                for rec in self.s_rects:
+                    if rec[1] == "appended":
+                        self.axes[0,1].add_patch(rec[0])
+                        rec[1] = "plotted"
+
             self.im.set_array(self.operator_list[0].internal_map)
             #self.im2.set_array(self.operator_list[0].confidence_map)
             
@@ -1554,7 +1565,7 @@ class SwarmSimulator(arcade.Window):
                 self.im3_y.append(error)
                 self.im3_x.append(self.timer/4)
    
-                self.axes[1,0].clear()
+                # self.axes[1,0].clear()
                 self.axes[1,0].set_title("Mapping precision")
                 self.axes[1,0].set_xlabel("Time (s)")
                 self.axes[1,0].set_ylabel("Error")
@@ -1569,20 +1580,6 @@ class SwarmSimulator(arcade.Window):
 
             self.u_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
-            
-            for rect in self.s_areas:
-                if rect[4] == "appended":
-                    rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
-                    self.s_rects.append([rectangle, "appended"])
-                    rect[4] = "plotted"
-                    
-            time.sleep(1) 
-            for rec in self.s_rects:
-                if rec[1] == "appended":
-                    self.axes[0,1].add_patch(rec[0])
-                    rec[1] = "plotted"
-
-            print(self.s_areas)
             
         # # To refresh the communications in drones
         # for drone in self.drone_list:
@@ -1757,7 +1754,7 @@ class SwarmSimulator(arcade.Window):
                     self.fps_list.append(round(self.fps.get_fps(), 1))
                     self.processing_time_list.append(self.processing_time)
                     self.drawing_time_list.append(self.draw_time)
-        
+                    
     def send_gradual_indirect_command(self, where, drone, alpha = 10):        
         if where == 'boundary':
             for i in range(self.GRID_Y):
@@ -1811,7 +1808,7 @@ class SwarmSimulator(arcade.Window):
         #np.savetxt('constant_repulsion_map.csv', self.operator_list[0].confidence_map, delimiter=",")        
         #self.display_selected_drone_info(drone)
         drone.communicate(self.operator_list[0]) #exchange message with drone        
-        #self.display_selected_drone_info(drone)    
+        #self.display_selected_drone_info(drone)
     
     def display_selected_drone_info(self, selected_drone):        
         '''

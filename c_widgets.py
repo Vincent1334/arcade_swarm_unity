@@ -15,16 +15,17 @@ class Annotate(object):
         self.ax.figure.canvas.mpl_connect('button_release_event', self.on_release)
 
     def on_press(self, event):
-        self.x0 = event.xdata
-        self.y0 = event.ydata
-        self.areas.append([self.x0, self.y0, 0, 0, "appended"])
+        if event.inaxes == self.ax:
+            self.x0 = event.xdata
+            self.y0 = event.ydata
 
     def on_release(self, event):
-        self.x1 = event.xdata
-        self.y1 = event.ydata
-        self.areas[-1][2] = self.x1 - self.x0
-        self.areas[-1][3] = self.y1 - self.y0
-        self.rect.set_width(self.x1 - self.x0)
-        self.rect.set_height(self.y1 - self.y0)
-        self.rect.set_xy((self.x0, self.y0))
+        if event.inaxes == self.ax:
+            self.x1 = event.xdata
+            self.y1 = event.ydata
+            self.areas.append([self.x0, self.y0, 
+                               self.x1 - self.x0, self.y1 - self.y0, "appended"])
+            self.rect.set_width(self.x1 - self.x0)
+            self.rect.set_height(self.y1 - self.y0)
+            self.rect.set_xy((self.x0, self.y0))
         
