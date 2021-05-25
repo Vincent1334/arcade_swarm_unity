@@ -1515,13 +1515,27 @@ class SwarmSimulator(arcade.Window):
 
                 for rect in self.s_areas:
                     if rect[4] == "appended":
-                        rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
-                        self.s_rects.append([rectangle, "appended"])
+                        if rect[5] == "a":
+                            rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
+                            self.s_rects.append([rectangle, "appended", None, "a"])
+                        elif rect[5] == "d":
+                            rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
+                            self.s_rects.append([rectangle, "appended", None, "d"])
                         rect[4] = "plotted"
                     
                 for rec in self.s_rects:
                     if rec[1] == "appended":
                         self.axes[0,1].add_patch(rec[0])
+                        rx, ry = rec[0].get_xy()
+                        cx = rx + rec[0].get_width()/2.0
+                        cy = ry + rec[0].get_height()/2.0
+                        i = self.s_rects.index(rec)
+                        if rec[3] == "a":
+                            rect[2] =  self.axes[0,1].annotate(f"Area {i} (A)", (cx, cy), color='w', weight='bold', 
+                                                                fontsize=6, ha='center', va='center', alpha=0.5)
+                        if rec[3] == "d":
+                            rect[2] =  self.axes[0,1].annotate(f"Area {i} (D)", (cx, cy), color='w', weight='bold', 
+                                                                fontsize=6, ha='center', va='center', alpha=0.5)
                         rec[1] = "plotted"
 
             self.im.set_array(self.operator_list[0].internal_map)

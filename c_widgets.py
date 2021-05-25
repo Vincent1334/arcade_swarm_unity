@@ -5,7 +5,7 @@ class Annotate(object):
         self.ax = ax
         self.areas = areas
         self.rects = rects
-        self.rect = Rectangle((0,0), 1, 1, color='orange', alpha=0.5)
+        self.rect = Rectangle((0,0), 0, 0, color='orange', alpha=0.5)
         self.x0 = None
         self.y0 = None
         self.x1 = None
@@ -23,8 +23,12 @@ class Annotate(object):
         if event.inaxes == self.ax:
             self.x1 = event.xdata
             self.y1 = event.ydata
-            self.areas.append([self.x0, self.y0, 
-                               self.x1 - self.x0, self.y1 - self.y0, "appended"])
+            if event.button == 1:
+                self.areas.append([self.x0, self.y0, 
+                                self.x1 - self.x0, self.y1 - self.y0, "appended", "a"])
+            elif event.button == 3:
+                self.areas.append([self.x0, self.y0, 
+                                self.x1 - self.x0, self.y1 - self.y0, "appended", "d"])
             self.rect.set_width(self.x1 - self.x0)
             self.rect.set_height(self.y1 - self.y0)
             self.rect.set_xy((self.x0, self.y0))
