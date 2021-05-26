@@ -16,7 +16,7 @@ import datetime
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.image as mpimg
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button, RadioButtons
 from matplotlib.patches import Rectangle
 import pathlib
 import cv2
@@ -899,6 +899,12 @@ class SwarmSimulator(arcade.Window):
             self.s_areas = []
             self.s_rects = []
             
+            # Selector Panel
+            self.s_fig = None
+            self.s_axes = None
+            self.s_im = None
+            self.s_list = []
+            self.s_list_pos = [0.17,0.8,0.7,0.05]
             
             # U2 Warning
             self.u2_warning = None
@@ -1226,6 +1232,17 @@ class SwarmSimulator(arcade.Window):
             
             self.u_fig.show()
             
+            # Selector Panel
+            self.s_fig = plt.figure("Swarm Navigation")
+            self.s_axes = self.s_fig.add_subplot(111)            
+            self.s_axes.set_xticks([])
+            self.s_axes.set_yticks([])   
+            self.s_axes.set_axis_off()     
+            self.s_axes.set_xlim(500)
+            self.s_axes.set_ylim(500)
+            self.s_axes.set_title("Swarm Navigation Control Panel")
+            self.s_fig.show()
+            
     def s_update(self, val):
         th_v = self.thresh_s.val
         self.threshhold_v = th_v
@@ -1513,6 +1530,7 @@ class SwarmSimulator(arcade.Window):
                 t_now_m = int(self.u_timer) // 60
                 self.u_fig.suptitle("{}m:{}s elapsed\n\n".format(t_now_m, t_now_s), fontsize=16)
 
+                # Main window rectangle creation
                 for rect in self.s_areas:
                     if rect[4] == "appended":
                         if rect[5] == "a":
@@ -1522,7 +1540,7 @@ class SwarmSimulator(arcade.Window):
                             rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
                             self.s_rects.append([rectangle, "appended", None, "d"])
                         rect[4] = "plotted"
-                    
+                        
                 for rec in self.s_rects:
                     if rec[1] == "appended":
                         self.axes[0,1].add_patch(rec[0])
@@ -1533,11 +1551,51 @@ class SwarmSimulator(arcade.Window):
                         if rec[3] == "a":
                             rect[2] =  self.axes[0,1].annotate(f"Area {i} (A)", (cx, cy), color='w', weight='bold', 
                                                                 fontsize=6, ha='center', va='center', alpha=0.5)
+                            # list
+                            if len(self.s_rects) == 1:
+                                l_pos = self.s_list_pos
+                            else:
+                                l_pos = self.s_list[-1][2]
+                                l_pos[1] -= 0.05
+                            ax = self.s_fig.add_axes(l_pos)
+                            entry = Button(ax, f"Area {i} (Attract) - Status: Initialized", color="orange")
+                            entry.on_clicked(self.u2_btn)
+                            
+                            l_pos_2 = l_pos.copy()
+                            l_pos_2[0] = 0.05
+                            l_pos_2[2] = 0.1
+                            ax2 = self.s_fig.add_axes(l_pos_2)
+                            entry2 = Button(ax2, "Remove")
+                            entry2.on_clicked(self.u2_btn_rm)
+                            
+                            entry_index = self.s_rects.index(rec)
+                            self.s_list.append([entry, "init", l_pos, entry2, entry_index])
+                            
                         if rec[3] == "d":
                             rect[2] =  self.axes[0,1].annotate(f"Area {i} (D)", (cx, cy), color='w', weight='bold', 
                                                                 fontsize=6, ha='center', va='center', alpha=0.5)
-                        rec[1] = "plotted"
+                            # list
+                            if len(self.s_rects) == 1:
+                                l_pos = self.s_list_pos
+                            else:
+                                l_pos = self.s_list[-1][2]
+                                l_pos[1] -= 0.05
+                            ax = self.s_fig.add_axes(l_pos)
+                            entry = Button(ax, f"Area {i} (Deflect) - Status: Initialized", color="orange")
+                            entry.on_clicked(self.u2_btn)
+                            
+                            l_pos_2 = l_pos.copy()
+                            l_pos_2[0] = 0.05
+                            l_pos_2[2] = 0.1
+                            ax2 = self.s_fig.add_axes(l_pos_2)
+                            entry2 = Button(ax2, "Remove")
+                            entry2.on_clicked(self.u2_btn_rm)
+                            
+                            entry_index = self.s_rects.index(rec)
+                            self.s_list.append([entry, "init", l_pos, entry2, entry_index])
 
+                        rec[1] = "plotted"
+                        
             self.im.set_array(self.operator_list[0].internal_map)
             #self.im2.set_array(self.operator_list[0].confidence_map)
             
@@ -1593,7 +1651,9 @@ class SwarmSimulator(arcade.Window):
                 #     a[1] = a[1] * 0.9
 
             self.u_fig.canvas.flush_events()
+            self.s_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
+            self.s_fig.canvas.draw()
             
         # # To refresh the communications in drones
         # for drone in self.drone_list:
@@ -2158,6 +2218,12 @@ class SwarmSimulator(arcade.Window):
             csv_o.writerow(['count','x','y'])
             for row in self.click_map:
                 csv_o.writerow(row)
+                
+    def u2_btn(self, event):
+        print("start/stop")
+        
+    def u2_btn_rm(self, event):
+        print("remove")
 
 def merge(list1, list2):       
     merged_list = [] 
