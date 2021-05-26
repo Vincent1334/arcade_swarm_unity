@@ -904,7 +904,7 @@ class SwarmSimulator(arcade.Window):
             self.s_axes = None
             self.s_im = None
             self.s_list = []
-            self.s_list_pos = [0.17,0.8,0.7,0.05]
+            self.s_list_pos = [0.21,0.8,0.7,0.05]
             
             # U2 Warning
             self.u2_warning = None
@@ -1562,7 +1562,7 @@ class SwarmSimulator(arcade.Window):
                             entry.on_clicked(self.u2_btn)
                             
                             l_pos_2 = l_pos.copy()
-                            l_pos_2[0] = 0.05
+                            l_pos_2[0] = 0.09
                             l_pos_2[2] = 0.1
                             ax2 = self.s_fig.add_axes(l_pos_2)
                             entry2 = Button(ax2, "Remove")
@@ -1585,7 +1585,7 @@ class SwarmSimulator(arcade.Window):
                             entry.on_clicked(self.u2_btn)
                             
                             l_pos_2 = l_pos.copy()
-                            l_pos_2[0] = 0.05
+                            l_pos_2[0] = 0.09
                             l_pos_2[2] = 0.1
                             ax2 = self.s_fig.add_axes(l_pos_2)
                             entry2 = Button(ax2, "Remove")
