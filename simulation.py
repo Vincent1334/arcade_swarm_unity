@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore")
 
 np.seterr(divide='ignore', invalid='ignore')
 
-EXP_D_T = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+EXP_D_T = datetime.datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
 
 '''
 Class Object (abstract class)
@@ -1201,7 +1201,6 @@ class SwarmSimulator(arcade.Window):
             
             # Slider
             self.threshhold_v = 0.5
-            
             self.ax_slider = divider2.append_axes("bottom", size="5%", pad=0.09)
             self.thresh_s = Slider(self.ax_slider, 'Threshold', 0, 1, valinit=0.5)
             self.thresh_s.on_changed(self.s_update)
@@ -1238,8 +1237,6 @@ class SwarmSimulator(arcade.Window):
             self.s_axes.set_xticks([])
             self.s_axes.set_yticks([])   
             self.s_axes.set_axis_off()     
-            self.s_axes.set_xlim(500)
-            self.s_axes.set_ylim(500)
             self.s_axes.set_title("Swarm Navigation Control Panel")
             self.s_fig.show()
             
@@ -1533,29 +1530,36 @@ class SwarmSimulator(arcade.Window):
                 # Main window rectangle creation
                 for rect in self.s_areas:
                     if rect[4] == "appended":
+                        rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
+                        
+                        self.axes[0,1].add_patch(rectangle)
+                        rx, ry = rectangle.get_xy()
+                        cx = rx + rectangle.get_width()/2.0
+                        cy = ry + rectangle.get_height()/2.0
+                        i = self.s_areas.index(rect)
+                        
                         if rect[5] == "a":
-                            rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
-                            self.s_rects.append([rectangle, "appended", None, "a"])
+                            ann = self.axes[0,1].annotate(f"Area {i} (A)", (cx, cy), color='w', weight='bold', 
+                                                                fontsize=6, ha='center', va='center', alpha=0.5)
+                            self.s_rects.append([rectangle, "appended", ann, "a"])
                         elif rect[5] == "d":
-                            rectangle = Rectangle((rect[0], rect[1]), rect[2], rect[3], color='orange', alpha=0.5)
-                            self.s_rects.append([rectangle, "appended", None, "d"])
+                            ann = self.axes[0,1].annotate(f"Area {i} (D)", (cx, cy), color='w', weight='bold', 
+                                                                fontsize=6, ha='center', va='center', alpha=0.5)
+                            self.s_rects.append([rectangle, "appended", ann, "d"])
                         rect[4] = "plotted"
                         
                 for rec in self.s_rects:
                     if rec[1] == "appended":
-                        self.axes[0,1].add_patch(rec[0])
-                        rx, ry = rec[0].get_xy()
-                        cx = rx + rec[0].get_width()/2.0
-                        cy = ry + rec[0].get_height()/2.0
-                        i = self.s_rects.index(rec)
                         if rec[3] == "a":
-                            rect[2] =  self.axes[0,1].annotate(f"Area {i} (A)", (cx, cy), color='w', weight='bold', 
-                                                                fontsize=6, ha='center', va='center', alpha=0.5)
                             # list
                             if len(self.s_rects) == 1:
                                 l_pos = self.s_list_pos
                             else:
-                                l_pos = self.s_list[-1][2]
+                                itm = None
+                                for s in self.s_list:
+                                    if self.s_rects[s[4]][1] == "plotted":
+                                        itm = s
+                                l_pos = list(itm[2].get_position().bounds)
                                 l_pos[1] -= 0.05
                             ax = self.s_fig.add_axes(l_pos)
                             entry = Button(ax, f"Area {i} (Attract) - Status: Initialized", color="orange")
@@ -1568,17 +1572,20 @@ class SwarmSimulator(arcade.Window):
                             entry2 = Button(ax2, "Remove")
                             entry2.on_clicked(self.u2_btn_rm)
                             
-                            entry_index = self.s_rects.index(rec)
-                            self.s_list.append([entry, "init", l_pos, entry2, entry_index])
+                            rect_index = self.s_rects.index(rec)
+                            self.s_list.append([entry, entry2, ax, ax2, rect_index])
                             
                         if rec[3] == "d":
-                            rect[2] =  self.axes[0,1].annotate(f"Area {i} (D)", (cx, cy), color='w', weight='bold', 
-                                                                fontsize=6, ha='center', va='center', alpha=0.5)
                             # list
                             if len(self.s_rects) == 1:
                                 l_pos = self.s_list_pos
                             else:
-                                l_pos = self.s_list[-1][2]
+                                itm = None
+                                for s in self.s_list:
+                                    if self.s_rects[s[4]][1] == "plotted":
+                                        itm = s
+                                print((itm[2].get_position().bounds))
+                                l_pos = list(itm[2].get_position().bounds)
                                 l_pos[1] -= 0.05
                             ax = self.s_fig.add_axes(l_pos)
                             entry = Button(ax, f"Area {i} (Deflect) - Status: Initialized", color="orange")
@@ -1591,35 +1598,34 @@ class SwarmSimulator(arcade.Window):
                             entry2 = Button(ax2, "Remove")
                             entry2.on_clicked(self.u2_btn_rm)
                             
-                            entry_index = self.s_rects.index(rec)
-                            self.s_list.append([entry, "init", l_pos, entry2, entry_index])
+                            rect_index = self.s_rects.index(rec)
+                            self.s_list.append([entry, entry2, ax, ax2, rect_index])
 
-                        rec[1] = "plotted"
+                        rec[1] = "plotted"    
                         
-            self.im.set_array(self.operator_list[0].internal_map)
-            #self.im2.set_array(self.operator_list[0].confidence_map)
-            
-            #smooth footprint
-            #img = cv2.imread('opencv_logo.png')
-            #img = im.fromarray(self.operator_list[0].confidence_map)
-            gen = np.array(self.operator_list[0].confidence_map)
-            #gen = np.true_divide(gen, 4)
+                self.im.set_array(self.operator_list[0].internal_map)
+                #self.im2.set_array(self.operator_list[0].confidence_map)
+                
+                #smooth footprint
+                #img = cv2.imread('opencv_logo.png')
+                #img = im.fromarray(self.operator_list[0].confidence_map)
+                gen = np.array(self.operator_list[0].confidence_map)
+                #gen = np.true_divide(gen, 4)
 
-            #2D convolution
-            #kernel = np.ones((5,5),np.float32)/25
-            #dst = cv2.filter2D(gen,-1,kernel)
-            #self.im2 = self.ax2.imshow(dst)
+                #2D convolution
+                #kernel = np.ones((5,5),np.float32)/25
+                #dst = cv2.filter2D(gen,-1,kernel)
+                #self.im2 = self.ax2.imshow(dst)
 
-            #self.im2 = self.ax2.imshow(gen, interpolation='quadric') 
+                #self.im2 = self.ax2.imshow(gen, interpolation='quadric') 
+                
+                #Gaussian Flitering
+                ret,thresh1 = cv2.threshold(gen,self.threshhold_v,1,cv2.THRESH_BINARY)
+                blur = cv2.GaussianBlur(thresh1,(11,11),0)
+                self.im2 = self.axes[0,1].imshow(blur)
+                
+                #self.im2 = self.axes[0,1].imshow(gen)
             
-            #Gaussian Flitering
-            ret,thresh1 = cv2.threshold(gen,self.threshhold_v,1,cv2.THRESH_BINARY)
-            blur = cv2.GaussianBlur(thresh1,(11,11),0)
-            self.im2 = self.axes[0,1].imshow(blur)
-            
-            #self.im2 = self.axes[0,1].imshow(gen)
-            
-            if self.timer > 1:
                 error = np.sum(np.abs(self.global_map - self.operator_list[0].internal_map))
                 '''
                 if len(self.im3_x) > 20:
@@ -2223,7 +2229,36 @@ class SwarmSimulator(arcade.Window):
         print("start/stop")
         
     def u2_btn_rm(self, event):
-        print("remove")
+        indx = 0
+        for ins in self.s_list:
+            if ins[3] == event.inaxes:
+                indx = self.s_list.index(ins)
+        
+        self.s_list[indx][2].set_visible(False)
+        self.s_list[indx][3].set_visible(False)
+        self.s_rects[self.s_list[indx][4]][0].set_visible(False)
+        self.s_rects[self.s_list[indx][4]][2].set_visible(False)
+        self.s_rects[self.s_list[indx][4]][1] = "removed"
+        self.s_areas[indx][4] = "removed"
+        
+        # Reorder panel
+        f = True
+        dim = self.s_list_pos
+        for i in range(len(self.s_list)):
+            if self.s_rects[self.s_list[i][4]][1] == "plotted":
+                pass
+            elif self.s_rects[self.s_list[i][4]][1] == "removed":
+                if self.s_rects[self.s_list[i+1][4]][1] == "plotted":
+                    self.s_list[i+1][2].set_position(self.s_list[i][2].get_position().bounds)
+                    self.s_list[i+1][3].set_position(self.s_list[i][3].get_position().bounds)
+                elif self.s_rects[self.s_list[i][4]][1] == "removed":
+                    for j in range(len(self.s_list[i:])):
+                        if self.s_rects[self.s_list[j+1][4]][1] == "plotted":
+                            self.s_list[j+1][2].set_position(self.s_list[j][2].get_position().bounds)
+                            self.s_list[j+1][3].set_position(self.s_list[j][3].get_position().bounds)
+                            break
+                        elif self.s_rects[self.s_list[i][4]][1] == "removed":
+                            pass
 
 def merge(list1, list2):       
     merged_list = [] 
@@ -2249,12 +2284,12 @@ def main(SIM_ID, ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment, SWARM_SIZE, run_
          communication_noise, alpha, normal_command, command_period, constant_repulsion,
          operator_vision_radius,communication_range, vision_range, velocity_weight_coef, boundary_repulsion,
          aging_factor, gp, gp_step, maze, through_walls,communication_noise_strength, communication_noise_prob,
-         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob):
+         positioning_noise_strength, positioning_noise_prob,sensing_noise_strength, sensing_noise_prob, exp_type):
 
     sim_net_id = SIM_ID
 
     sim = SwarmSimulator(ARENA_WIDTH, ARENA_HEIGHT, name_of_experiment,
-                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, "normal_network")
+                                    SWARM_SIZE, run_time, INPUT_TIME, GRID_X, GRID_Y, "user_study_2")
     sim.setup(disaster_size, disaster_location, operator_size, operator_location, reliability_1,
                 reliability_2, unreliability_percentage, moving_disaster, communication_noise,
                 alpha, normal_command, command_period, constant_repulsion, operator_vision_radius,
@@ -2321,6 +2356,7 @@ if __name__ == "__main__":
     parser.add_argument('-sensing_noise_strength', type = float, default = 0) 
     parser.add_argument('-sensing_noise_prob', type = float, default = 0) 
     parser.add_argument('-sim_id', type = str, default = "0") 
+    parser.add_argument('-exp_type', type = str, default = None) # Online experiment modes
 
     args = parser.parse_args()
     
@@ -2337,4 +2373,4 @@ if __name__ == "__main__":
          disasters_locations, args.op_size, operators_locations, args.r_min, args.r_max, args.r_perc, args.d_move, 
          args.noise, args.alpha, args.cmd, args.cmd_t, args.const_repel, args.hum_r, args.comm_range, args.vis_range, args.w, 
          args.bound, args.aging, args.gp, args.gp_step, args.maze, args.walls, args.communication_noise_strength, args.communication_noise_prob,
-         args.positioning_noise_strength, args.positioning_noise_prob, args.sensing_noise_strength, args.sensing_noise_prob)
+         args.positioning_noise_strength, args.positioning_noise_prob, args.sensing_noise_strength, args.sensing_noise_prob, args.exp_type)

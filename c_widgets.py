@@ -32,4 +32,5 @@ class Annotate(object):
             self.rect.set_width(self.x1 - self.x0)
             self.rect.set_height(self.y1 - self.y0)
             self.rect.set_xy((self.x0, self.y0))
+            self.rect.set_visible(False)
         
