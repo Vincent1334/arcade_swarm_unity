@@ -25,10 +25,10 @@ class Annotate(object):
             self.y1 = event.ydata
             if event.button == 1:
                 self.areas.append([self.x0, self.y0, 
-                                self.x1 - self.x0, self.y1 - self.y0, "appended", "a"])
+                                self.x1, self.y1, "appended", "a"])
             elif event.button == 3:
                 self.areas.append([self.x0, self.y0, 
-                                self.x1 - self.x0, self.y1 - self.y0, "appended", "d"])
+                                self.x1, self.y1, "appended", "d"])
             self.rect.set_width(self.x1 - self.x0)
             self.rect.set_height(self.y1 - self.y0)
             self.rect.set_xy((self.x0, self.y0))
