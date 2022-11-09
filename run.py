@@ -1,3 +1,4 @@
+from cmath import inf
 import sys
 import subprocess
 import re
@@ -36,67 +37,67 @@ import re
 -maze            type = str     default = True         maze type
 -run_time        type = int     default = 1000         simulation steps
 '''
-  
-def compare_swarm_sizes(swarm_sizes = [1, 5, 10, 15, 20, 25, 50]):    
-    cmds = []   
-    for size in swarm_sizes:             
+
+def compare_swarm_sizes(swarm_sizes = [1, 5, 10, 15, 20, 25, 50]):
+    cmds = []
+    for size in swarm_sizes:
         cmds.append('-name "first experiment_{0}" -d_x 500 -d_y 500'.format(str(size)) + ' -size ' + str(size))
         cmds.append('-name "first experiment_{0}" -d_x 100 -d_y 500'.format(str(size)) + ' -size ' + str(size))
         cmds.append('-name "first experiment_{0}" -d_x 300 -d_y 100'.format(str(size)) + ' -size ' + str(size))
-    return cmds    
+    return cmds
 
-def simple_experiment():    
-    cmds = []                
+def simple_experiment():
+    cmds = []
     cmds.append('-name "second experiment" -d_x 500 -d_y 500 -size 150')
     cmds.append('-name "second experiment" -d_x 100 -d_y 500')
     cmds.append('-name "second experiment" -d_x 300 -d_y 100')
     return cmds
-    
-def reliability_experiment(min_reliability = 95, max_reliability = 100, unreliability_percentage = [0, 20, 50]):    
-    cmds = []    
-    addition = ' -r_min '+ str(min_reliability) + ' -r_max '+ str(max_reliability)     
-    for level in unreliability_percentage:     
+
+def reliability_experiment(min_reliability = 95, max_reliability = 100, unreliability_percentage = [0, 20, 50]):
+    cmds = []
+    addition = ' -r_min '+ str(min_reliability) + ' -r_max '+ str(max_reliability)
+    for level in unreliability_percentage:
         cmds.append('-name "third experiment_{0}" -d_x 500 -d_y 500'.format(level) + addition + ' -r_perc ' + str(level) )
         cmds.append('-name "third experiment_{0}" -d_x 100 -d_y 500'.format(level) + addition + ' -r_perc ' + str(level) )
         cmds.append('-name "third experiment_{0}" -d_x 300 -d_y 100'.format(level) + addition + ' -r_perc ' + str(level) )
     return cmds
-    
-def noise_experiment(noise_levels = [0, 10, 15]):    
-    cmds = []        
-    for level in noise_levels:        
+
+def noise_experiment(noise_levels = [0, 10, 15]):
+    cmds = []
+    for level in noise_levels:
         cmds.append('-name "fourth experiment_{0}" -d_x 500 -d_y 500 -noise '.format(level) + str(level))
         cmds.append('-name "fourth experiment_{0}" -d_x 100 -d_y 500 -noise '.format(level) + str(level))
         cmds.append('-name "fourth experiment_{0}" -d_x 300 -d_y 100 -noise '.format(level) + str(level))
     return cmds
- 
-def ordinary_repulsion(ranges = [50, 100, 150], t = 25):    
-    cmds = []        
-    addition = ' -cmd "center repel" -cmd_t ' + str(t) 
-    for r in ranges:        
+
+def ordinary_repulsion(ranges = [50, 100, 150], t = 25):
+    cmds = []
+    addition = ' -cmd "center repel" -cmd_t ' + str(t)
+    for r in ranges:
         cmds.append('-name "ordinary repulsion experiment_r{0}_t{1}" -d_x 500 -d_y 500'.format(r, t) + addition + ' -hum_r ' + str(r))
         cmds.append('-name "ordinary repulsion experiment_r{0}_t{1}" -d_x 100 -d_y 500'.format(r, t) + addition + ' -hum_r ' + str(r))
         cmds.append('-name "ordinary repulsion experiment_r{0}_t{1}" -d_x 300 -d_y 100'.format(r, t) + addition + ' -hum_r ' + str(r))
     return cmds
-        
-def ordinary_attraction(ranges = [50, 100, 150], t = 25):    
-    cmds = []        
-    addition = ' -cmd "center attract" -cmd_t ' + str(t) 
-    for r in ranges:        
+
+def ordinary_attraction(ranges = [50, 100, 150], t = 25):
+    cmds = []
+    addition = ' -cmd "center attract" -cmd_t ' + str(t)
+    for r in ranges:
         cmds.append('-name "ordinary attraction experiment_r{0}_t{1}" -d_x 500 -d_y 500'.format(r, t) + addition + ' -hum_r ' + str(r))
         cmds.append('-name "ordinary attraction experiment_r{0}_t{1}" -d_x 100 -d_y 500'.format(r, t) + addition + ' -hum_r ' + str(r))
         cmds.append('-name "ordinary attraction experiment_r{0}_t{1}" -d_x 300 -d_y 100'.format(r, t) + addition + ' -hum_r ' + str(r))
     return cmds
 
-def constant_center_repel(ranges = [50, 100, 150]):    
-    cmds = []         
-    for r in ranges:        
+def constant_center_repel(ranges = [50, 100, 150]):
+    cmds = []
+    for r in ranges:
         cmds.append('-name "constant repulsion experiment_r{0}" -d_x 500 -d_y 500 -const_repel "True"'.format(r) + ' -hum_r ' + str(r))
         cmds.append('-name "constant repulsion experiment_r{0}" -d_x 100 -d_y 500 -const_repel "True"'.format(r) + ' -hum_r ' + str(r))
         cmds.append('-name "constant repulsion experiment_r{0}" -d_x 300 -d_y 100 -const_repel "True"'.format(r) + ' -hum_r ' + str(r))
     return cmds
 
-def moving_disaster():    
-    cmds = []             
+def moving_disaster():
+    cmds = []
     #cmds.append('-name "moving_disaster" -d_x 500 -d_y 500 -d_move "True"')
     #cmds.append('-name "moving_disaster" -d_x 100 -d_y 500 -d_move "True"')
     cmds.append('-name "moving_disaster" -d_x 500 -d_y 100 -d_move "True"')
@@ -114,18 +115,18 @@ def new_maze(maze_type):
 
 def maze_experiments(maze_type = None, operator_range = [150, 100, 50], drone_range = [8, 4], gp = False, addition = '-op_xs 500 -op_ys 300 -d_xs 100 -d_ys 300'):
 
-    cmds = []         
+    cmds = []
     for op_r in operator_range:
         for r in drone_range:
             if gp == True:
                 if maze_type == None:
                     cmds.append('-name "gp_no_maze_op_{0}_dr_{1}" -gp "True" -hum_r {0} -comm_range {1} '.format(op_r,r) + addition)
-                else:                
+                else:
                     cmds.append('-name "gp_maze_{0}_op_{1}_dr_{2}" -maze "{0}" -gp "True" -aging 0.995 -w 0.005 -hum_r {1} -comm_range {2} '.format(maze_type,op_r,r) + addition)
             else:
                 if maze_type == None:
                     cmds.append('-name "gp_no_maze_op_{0}_dr_{1}" -hum_r {0} -comm_range {1} '.format(op_r,r) + addition)
-                else:  
+                else:
                     cmds.append('-name "gp_maze_{0}_op_{1}_dr_{2}" -maze "{0}" -aging 0.995 -w 0.005 -hum_r {1} -comm_range {2} '.format(maze_type,op_r,r) + addition)
 
     return cmds
@@ -157,54 +158,58 @@ def sensing_noise(sensing_noise_strength = [0.1, 0.25, 0.5, 0.75, 1], sensing_no
     return cmds
 
 def bottleneck_tests(swarm_size = 100, r = 40, alpha = 0.99, t = 300, comm_range = 2):
-    cmds = []  
+    cmds = []
     for exp_num in range(1):
         cmds.append('-name bottleneck_test_experiment_S{}_E{}'.format(swarm_size, exp_num) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range))
     return cmds
 
 def online_experiment(swarm_size = 15, r = 40, vs_range=2, alpha = 0.99, t = 300, comm_range = 15, online_exp = "normal_network", ex_time = 500):
-    cmds = []  
+    cmds = []
     for exp_num in range(1):
-        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -exp_type ' + str(online_exp) + ' -run_time ' + str(ex_time) \
+        cmds.append('-name Online_experiment_S{}'.format(swarm_size) + ' -exp_type ' + str(online_exp) \
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -size ' + str(swarm_size))
     return cmds
-    
+
 def accuracy_diag(swarm_size = 1, r = 40, alpha = 0.99, t = 300, comm_range = 15,  ex_time = 500):
-    cmds = []  
+    cmds = []
     for exp_num in range(1):
         cmds.append('-name accuracy_test_S{}_E{}_CR{}'.format(swarm_size, exp_num, comm_range) + ' -size ' +str(swarm_size) + ' -hum_r ' + str(r) + ' -cmd_t ' +  str(t)
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range)+ ' -run_time ' + str(ex_time))
     return cmds
 
 def user_study1(swarm_size = 30, r = 40, vs_range=1, alpha = 0.99, t = 300, comm_range = 5, exp_type = "user_study", ex_time = 500, aging_factor=0.995, boundary_repulsion=1):
-    cmds = []  
+    cmds = []
     for exp_num in range(1):
         cmds.append('-name User_Study_1_S{}'.format(swarm_size) + ' -exp_type ' + str(exp_type) + ' -run_time ' + str(ex_time) \
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -size ' + str(swarm_size) + ' -d_move ' + str(True) + ' -aging ' + str(aging_factor) +' -bound ' + str(boundary_repulsion))
     return cmds
 
 def user_study2(swarm_size = 50,  vs_range=1, vs_radius=40, alpha = 0.99, t = 300, comm_range = 3, exp_type = "user_study_2", ex_time = 500, aging_factor=0.995):
-    cmds = []  
+    cmds = []
     for exp_num in range(1):
         cmds.append('-name User_Study_2_S{}'.format(swarm_size) + ' -exp_type ' + str(exp_type) + ' -run_time ' + str(ex_time) \
                     + ' -alpha ' + str(alpha) + ' -comm_range ' + str(comm_range) + ' -size ' + str(swarm_size) + ' -d_move ' + str(True)
                     + ' -hum_r ' + str(vs_radius) + ' -vis_range ' + str(vs_range) + ' -aging ' + str(aging_factor))
     return cmds
 
+# VS Bachelor
+def vr_interface(swarm_size = 5):
+    cmds = ['-name VR_Interface{}'.format(swarm_size) + ' -size ' + str(swarm_size) + ' -exp_type unity_network']
+    return cmds
 
-def trim_cmd(cmd):    
+def trim_cmd(cmd):
     PATTERN = re.compile(r'''((?:[^ "]|"[^"]*")+)''')
     cmd = PATTERN.split(cmd)[1::2]
-    
+
     for i in range(len(cmd)):
-        cmd[i] = re.sub('"','', cmd[i])        
+        cmd[i] = re.sub('"','', cmd[i])
     return cmd
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     exp = int(sys.argv[1])
     N = 1
-    
+
     procs = []
     for _ in range(N):
         if exp == 1:
@@ -244,7 +249,7 @@ if __name__ == "__main__":
         elif exp == 17:
             cmds = maze_experiments()
         elif exp == 18:
-            cmds = maze_experiments(gp = True)            
+            cmds = maze_experiments(gp = True)
         elif exp == 19:
             cmds = ['-name "distances"']
         elif exp == 20:
@@ -265,14 +270,17 @@ if __name__ == "__main__":
             cmds = user_study1()
         elif exp == 28:
             cmds = user_study2()
+        # VS Bachelor
+        elif exp == 29:
+            cmds = vr_interface()
 
-            
-        for cmd in cmds:            
+
+        for cmd in cmds:
             proc = subprocess.Popen([sys.executable, 'init.py'] + trim_cmd(cmd))
-            procs.append(proc)       
-    
+            procs.append(proc)
+
     for proc in procs:
         try:
-            proc.wait()   
+            proc.wait()
         except KeyboardInterrupt:
-            print("Subprocess Ended!")     
+            print("Subprocess Ended!")
