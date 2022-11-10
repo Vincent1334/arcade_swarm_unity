@@ -26,8 +26,6 @@ from c_widgets import Annotate
 
 #VS Bachelor
 import socket
-import http.server
-import socketserver
 import json
 from json import JSONEncoder
 
@@ -809,25 +807,6 @@ def listener(sim):
             else:
                 print("Wrong Command!")
 
-#VS Bachelor
-def unity_listener(self, unity_conn):
-    while True:
-        # receive data stream. it won't accept data packet greater than 1024 bytes
-        data = unity_conn.recv(1024).decode()
-        if not data:
-            # if data is not received break
-            break
-
-        r = input()
-
-        if r == 'close':
-            break
-        print("from connected user: " + str(data))
-        data = input(' -> ')
-        #unity_conn.send(data.encode())  # send data to the client
-
-    unity_conn.close()  # close the connection
-
 def find_nbs(matrix, indices):
 
     matrix = np.array(matrix)
@@ -842,14 +821,9 @@ def find_nbs(matrix, indices):
 
     return nb_indexes
 
-# VS Bachelor
-class NumpyArrayEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return JSONEncoder.default(self, obj)
-
 class SwarmSimulator(arcade.Window):
+
+    #VS Bachelor
 
     def __init__(self, ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE, SWARM_SIZE, RUN_TIME, INPUT_TIME, GRID_X, GRID_Y, exp_type):
 
@@ -941,6 +915,10 @@ class SwarmSimulator(arcade.Window):
 
             # U2 Warning
             self.u2_warning = None
+
+        if exp_type == "unity_network":
+            global unity_conn
+            unity_conn = self.init_unity_server()
 
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         #super().set_location(50,50)
@@ -1388,14 +1366,25 @@ class SwarmSimulator(arcade.Window):
     def get_median_belief_error(self, belief_map = 'belief_map'):
         return np.median(self.get_swarm_internal_error(belief_map))
 
-    # VS Bachelor
-    def send_data_to_unity(self):
-        api_server = 'http://localhost:8000'
+    def send_unity_update(self, unity_conn):
+        # Serialization
+        drones = len(self.drone_list)
+        id = []
+        x_pos = []
+        y_pos = []
+        for drone in self.drone_list:
+            x_pos.append(drone.center_x)
+            y_pos.append(drone.center_y)
+            id.append(drone.name)
+
+        data = {"drones": drones, "name": id, "x": x_pos, "y": y_pos }
+        unity_conn.send(json.dumps(data).encode())  # send data to the client
 
     def init_unity_server(self):
         print("Wait until Unity client connected...")
+
         # get the hostname
-        host = "localhost"
+        host = "192.168.2.29"
         port = 5001  # initiate port no above 1024
 
         server_socket = socket.socket()  # get instance
@@ -1408,13 +1397,7 @@ class SwarmSimulator(arcade.Window):
 
         print("Connection from: " + str(address))
 
-        # send start position of drones
-        #unity_conn.send("Cool".encode())
-
-        numpyData = {"drones": self.drones_positions}
-        unity_conn.send(json.dumps(numpyData, cls=NumpyArrayEncoder).encode())  # send data to the client
-
-       # Thread(target=unity_listener, args=[self, unity_conn]).start()
+        return unity_conn
 
     def update_map(self):
         self.global_map=[[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]
@@ -1519,10 +1502,6 @@ class SwarmSimulator(arcade.Window):
         if self.timer == 1:
             if self.exp_type == "normal_network":
                 Thread(target=listener, args=[self]).start()
-            #VS Bachelor
-            if self.exp_type == "unity_network":
-                self.init_unity_server()
-                print("Hello Unity!")
             '''
             elif self.exp_type == "user_study":
                 self.u_name = input("Please enter your name: ")
@@ -1585,6 +1564,9 @@ class SwarmSimulator(arcade.Window):
         start_time = timeit.default_timer()
 
         self.timer += 1
+
+        if self.exp_type == "unity_network":
+            self.send_unity_update(self, self.unity_conn)
 
         if self.exp_type == "user_study":
             self.im.set_array(self.operator_list[0].internal_map)
