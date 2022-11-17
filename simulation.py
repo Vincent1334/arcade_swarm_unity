@@ -761,6 +761,8 @@ class Drone(Agent):
                 self.predict_belief_map2()
 
         self.change_x, self.change_y = self.get_gradient_velocity()
+        self.change_x = self.change_x/6
+        self.change_y = self.change_y/6
 
         '''
         positioning_noise_x = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
@@ -871,22 +873,27 @@ def find_nbs(matrix, indices):
     return nb_indexes
 
 
-def init_unity_server():
+def init_unity_server(self):
     print("Wait until Unity client connected...")
 
     # get the hostname
     host = "192.168.2.29"
-    port = 5001  # initiate port no above 1024
+    port = 5500  # initiate port no above 1024
 
-    server_socket = socket.socket()  # get instance
+    server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)  # get instance
     # look closely. The bind() function takes tuple as argument
     server_socket.bind((host, port))  # bind host address and port together
 
-    # configure how many client the server can listen simultaneously
-    server_socket.listen(1)
-    unity_conn, address = server_socket.accept()  # accept new connection
-    print("Connection from: " + str(address))
-    return unity_conn
+    # Wait for client
+    while(True):
+        bytesAddressPair = server_socket.recvfrom(1024)
+        address = bytesAddressPair[1]
+        self.clientIP = address
+        if self.clientIP[0] != "":
+            break
+
+    print("Connection from: " + str(self.clientIP))
+    return server_socket
 
 
 class SwarmSimulator(arcade.Window):
@@ -986,7 +993,8 @@ class SwarmSimulator(arcade.Window):
             self.u2_warning = None
 
         if exp_type == "unity_network":
-            self.UNITY_CONN = init_unity_server()
+            self.clientIP = ""
+            self.UNITY_CONN = init_unity_server(self)
 
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         # super().set_location(50,50)
@@ -1480,20 +1488,33 @@ class SwarmSimulator(arcade.Window):
         return np.median(self.get_swarm_internal_error(belief_map))
 
     def send_unity_update(self):
-        # Serialization
+        # Serialization Drones position
         drones = len(self.drone_list)
-        id = []
-        x_pos = []
-        y_pos = []
+        drones_id = []
+        drones_x_pos = []
+        drones_y_pos = []
         for drone in self.drone_list:
-            x_pos.append(drone.center_x)
-            y_pos.append(drone.center_y)
-            id.append(drone.name)
+            drones_x_pos.append(drone.center_x)
+            drones_y_pos.append(drone.center_y)
+            drones_id.append(drone.name)
 
-        data = {"drones": drones, "name": id, "x": x_pos, "y": y_pos}
+        # Serialization Human position
+        humans = len(self.operator_list)
+        humans_x_pos = []
+        humans_y_pos = []
+        for human in self.operator_list:
+            humans_x_pos.append(human.center_x)
+            humans_y_pos.append(human.center_y)
 
-        self.UNITY_CONN.send((json.dumps(data) + "\n").encode())  # send data to the client
+        data = {"drones": drones,
+                "drones_name": drones_id,
+                "drones_x": drones_x_pos,
+                "drones_y": drones_y_pos,
+                "humans": humans,
+                "humans_x": humans_x_pos,
+                "humans_y": humans_y_pos}
 
+        self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
 
     def update_map(self):
         self.global_map = [[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]
@@ -1664,7 +1685,6 @@ class SwarmSimulator(arcade.Window):
 
         # Start update timer
         start_time = timeit.default_timer()
-
         self.timer += 1
 
         if self.exp_type == "user_study":
