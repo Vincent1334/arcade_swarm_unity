@@ -884,6 +884,18 @@ def init_unity_server(self):
     # look closely. The bind() function takes tuple as argument
     server_socket.bind((host, port))  # bind host address and port together
 
+    SEND_BUF_SIZE = 65000
+    RECV_BUF_SIZE = 65000
+
+    server_socket.setsockopt(
+        socket.SOL_SOCKET,
+        socket.SO_SNDBUF,
+        SEND_BUF_SIZE)
+    server_socket.setsockopt(
+        socket.SOL_SOCKET,
+        socket.SO_RCVBUF,
+        RECV_BUF_SIZE)
+
     # Wait for client
     while(True):
         bytesAddressPair = server_socket.recvfrom(1024)
@@ -1494,8 +1506,9 @@ class SwarmSimulator(arcade.Window):
         drones_x_pos = []
         drones_y_pos = []
         for drone in self.drone_list:
-            drones_x_pos.append(drone.center_x)
-            drones_y_pos.append(drone.center_y)
+            # Swap x and y because unity use another coordinate system
+            drones_x_pos.append(drone.center_y)
+            drones_y_pos.append(drone.center_x)
             drones_id.append(drone.name)
 
         # Serialization Human position
@@ -1503,16 +1516,22 @@ class SwarmSimulator(arcade.Window):
         humans_x_pos = []
         humans_y_pos = []
         for human in self.operator_list:
-            humans_x_pos.append(human.center_x)
-            humans_y_pos.append(human.center_y)
+            # Swap x and y because unity use another coordinate system
+            humans_x_pos.append(human.center_y)
+            humans_y_pos.append(human.center_x)
 
-        data = {"drones": drones,
+        # Send Human heat-Maps
+       # print(self.operator_list[0].confidence_map)
+
+        data = {
+                "drones": drones,
                 "drones_name": drones_id,
                 "drones_x": drones_x_pos,
                 "drones_y": drones_y_pos,
                 "humans": humans,
                 "humans_x": humans_x_pos,
-                "humans_y": humans_y_pos}
+                "humans_y": humans_y_pos,
+                "internal_map": self.operator_list[0].internal_map.tolist()}
 
         self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
 
