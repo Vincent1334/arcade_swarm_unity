@@ -1520,9 +1520,6 @@ class SwarmSimulator(arcade.Window):
             humans_x_pos.append(human.center_y)
             humans_y_pos.append(human.center_x)
 
-        # Send Human heat-Maps
-       # print(self.operator_list[0].confidence_map)
-
         data = {
                 "drones": drones,
                 "drones_name": drones_id,
@@ -1531,7 +1528,8 @@ class SwarmSimulator(arcade.Window):
                 "humans": humans,
                 "humans_x": humans_x_pos,
                 "humans_y": humans_y_pos,
-                "internal_map": self.operator_list[0].internal_map.tolist()}
+                "internal_map": self.operator_list[0].internal_map.tolist(),
+                "confidence_map": self.operator_list[0].confidence_map.tolist()}
 
         self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
 
