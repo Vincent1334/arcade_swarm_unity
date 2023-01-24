@@ -1,15 +1,24 @@
+import threading
+
 import arcade
 from threading import *
 import numpy as np
+import numpy.ma as ma
 import random
 import scipy, scipy.ndimage
+from scipy.ndimage import gaussian_filter
 import math
 import time
+import matplotlib
+matplotlib.use('MacOSX')
 from matplotlib import pyplot as plt
+
 import collections
 import os
 import timeit
 import requests
+import random
+
 from fps_test_modules import FPSCounter
 import time as timeclock
 import datetime
@@ -27,6 +36,7 @@ from c_widgets import Annotate
 # VS Bachelor
 import socket
 import json
+from threading import Thread
 from json import JSONEncoder
 
 warnings.filterwarnings("ignore")
@@ -135,12 +145,14 @@ Class Agent (abstract class)
 
 
 class Agent(Object):
-    def __init__(self, x, y, change_x, change_y, scl, img, sim, reliability=1, communication_noise=0):
+    def __init__(self, x, y, change_x, change_y, scl, img, sim, reliability=1, communication_noise=0, agent_id=0):
         super().__init__(x, y, change_x, change_y, scl, img, sim)
 
         self.confidence_map = np.array(
             [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
         self.internal_map = np.array(
+            [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
+        self.health_map = np.array(
             [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
 
         self.reliability = reliability
@@ -156,6 +168,13 @@ class Agent(Object):
 
         self.message = ""
 
+        self.health = 1
+        self.agent_id = agent_id
+        if agent_id != 0:
+            self.known_drones = [self.agent_id]
+        else:
+            self.known_drones = []
+
     def update(self):
         # sensing_noise = np.random.uniform(0, self.simulation.sensing_noise_strength, (self.simulation.GRID_Y, self.simulation.GRID_X))
 
@@ -167,37 +186,6 @@ class Agent(Object):
         super().update()
 
     def communicate(self, agent, how):
-        '''
-        if self.simulation.through_walls == False:
-
-            #print('ping')
-            from bresenham import bresenham
-
-            visible = True
-
-            line_segment = list(bresenham(self.grid_pos_y, self.grid_pos_x, agent.grid_pos_y, agent.grid_pos_x))
-
-            for k,j in line_segment:
-                obstacle = self.is_obstacle_at_position(k, j)
-
-                if obstacle == True:
-                    visible = False
-                    break
-
-            if visible == True:
-                self.exchange_data(agent, how)
-
-        else:
-        '''
-        # if random.random() > self.simulation.communication_noise_prob:
-        #     #self.communication_noise = random.uniform(0, self.simulation.communication_noise_strength)
-        #     if self.have_communicated == False:
-        #         self.exchange_data(agent, how)
-        #         self.message_count_succ += 1
-        #         self.have_communicated = True
-        # else:
-        #     self.message_count_fail += 1
-
         self.exchange_data(agent, how)
         self.message_count_succ += 1
         self.have_communicated = True
@@ -220,19 +208,10 @@ class Agent(Object):
                         agent.internal_map[i][j] = self.reliability * self.internal_map[i][
                             j] + coeff * self.communication_noise
                         agent.confidence_map[i][j] = self.confidence_map[i][j] + coeff * self.communication_noise
-        elif how == 'average':
-            # self.message_count_succ += 1
-            agent.internal_map = self.internal_map = (
-                                                                 self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise
-            agent.confidence_map = self.confidence_map = (
-                                                                     self.confidence_map + agent.confidence_map) / 2 + coeff * self.communication_noise
+
 
     def exchange_data(self, agent, how):
-        '''if (random.randrange(0, 100) < 50):
-            coeff = +1
-        else:
-            coeff = -1
-        '''
+
         coeff = 0
         #################################
 
@@ -269,58 +248,30 @@ class Agent(Object):
                     self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask,
                    (self.confidence_map + agent.confidence_map) / 2 + coeff * self.communication_noise)
-        # for j in range(self.simulation.GRID_X):
-        #     for i in range(self.simulation.GRID_Y):
-        #         agent_confidence = agent.confidence_map[i][j]
-        #         agent_belief = agent.internal_map[i][j]
 
-        #         self_confidence = self.confidence_map[i][j]
-        #         self_belief = self.internal_map[i][j]
-        #         #print ('confidence is ' + str(agent_confidence))
-        #         if (agent_confidence > 0.8) or (self_confidence > 0.8):
-        #             if (agent_confidence > self_confidence):
-        #                 self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise
-        #                 self_confidence = agent_confidence + coeff * self.communication_noise
-        #             else:
-        #                 agent_belief =  self.reliability * self_belief + coeff * self.communication_noise
-        #                 agent_confidence = self_confidence + coeff * self.communication_noise
-        #         elif (agent_confidence < 0) or (self_confidence < 0):
-        #             if (agent_confidence < self_confidence):
-        #                 self_belief =  agent.reliability * agent_belief + coeff * self.communication_noise
-        #                 self_confidence = agent_confidence + coeff * self.communication_noise
-        #             else:
-        #                 agent_belief =  self.reliability * self_belief + coeff * self.communication_noise
-        #                 agent_confidence = self_confidence + coeff * self.communication_noise
-        #         else:
-        #             agent_belief = self_belief = (self.reliability * self_belief + agent.reliability * agent_belief)/2  + coeff * self.communication_noise
-        #             agent_confidence = self_confidence = (self_confidence + agent_confidence)/2  + coeff * self.communication_noise
+        # Health
+        for j in range(self.simulation.GRID_X):
+            for i in range(self.simulation.GRID_Y):
+                if agent.health_map[i][j] > self.health_map[i][j]:
+                    self.health_map[i][j] = agent.reliability * agent.health_map[i][
+                        j] + coeff * self.communication_noise
+                    self.health_map[i][j] = agent.health_map[i][j] + coeff * self.communication_noise
+                else:
+                    agent.health_map[i][j] = self.reliability * self.health_map[i][
+                        j] + coeff * self.communication_noise
+                    agent.health_map[i][j] = self.health_map[i][j] + coeff * self.communication_noise
 
-        #         agent.confidence_map[i][j] = agent_confidence
-        #         agent.internal_map[i][j] = agent_belief
-        #         self.confidence_map[i][j]= self_confidence
-        #         self.internal_map[i][j] = self_belief
-        '''
-        #agent.internal_map = self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise
-        #agent.confidence_map = self.confidence_map = (self.confidence_map + agent.confidence_map)/2  + coeff * self.communication_noise
+        health_value = (self.health + agent.health) / 2
+        self.health_map[self.grid_pos_x][self.grid_pos_y] = health_value
+        agent.health_map[agent.grid_pos_x][agent.grid_pos_y] = health_value
 
-        agent.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise
-        agent.internal_map [agent.internal_map > 1] = 1
-        agent.internal_map [agent.internal_map < -10] = -10
+        #Swarm Size
+        tmpList = list(set(self.known_drones) | set(agent.known_drones))
+        self.known_drones = tmpList
+        agent.known_drones = tmpList
 
-        self.internal_map = (self.reliability * self.internal_map + agent.reliability * agent.internal_map)/2  + coeff * self.communication_noise
-        self.internal_map [self.internal_map  > 1] = 1
-        self.internal_map [self.internal_map < -10] = -10
-
-        agent.confidence_map = (self.reliability * self.confidence_map + agent.reliability * agent.confidence_map)/2  + coeff * self.communication_noise
-        agent.confidence_map [agent.confidence_map  > 1] = 1
-        agent.confidence_map [agent.confidence_map < -10] = -10
-
-        self.confidence_map = (self.reliability * self.confidence_map + agent.reliability * agent.confidence_map)/2  + coeff * self.communication_noise
-        self.confidence_map [self.confidence_map > 1] = 1
-        self.confidence_map [self.confidence_map < -10] = -10
-        '''
-        #################################
-
+        #self.health_map = gaussian_filter(self.health_map, sigma=0.4)
+        #agent.health_map = gaussian_filter(agent.health_map, sigma=0.4)
     def is_obstacle_at_position(self, k, j):
 
         obstacle = False
@@ -360,6 +311,8 @@ class Human(Agent):
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
         self.confidence_map[(self.confidence_map > -0.001) & (self.confidence_map < 0)] = 0.001
         self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
+        self.health_map += 0.0001
+        self.health_map[(self.health_map > -0.001) & (self.health_map < 0)] = 0.001
 
         '''
         t0 = self.simulation.INPUT_TIME - 1
@@ -370,9 +323,9 @@ class Human(Agent):
         # if self.simulation.timer == 10 or self.simulation.timer%100 == 0:
         # self.simulation.save_one_heatmap(self.internal_map, 'belief_' + str(self.simulation.timer), self.simulation.directory)
 
-        if self.simulation.timer % 100 == 0:
-            self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer),
-                                             self.simulation.directory)
+        #if self.simulation.timer % 100 == 0:
+        #    self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer),
+        #                                     self.simulation.directory)
 
         if gp_operator == True:
             if self.simulation.timer % 100 == 0:
@@ -446,7 +399,7 @@ Class Drone
 class Drone(Agent):
     def __init__(self, x, y, speed, radius, name, sim, img='images/drone.png', reliability=1, communication_noise=0):
 
-        super().__init__(x, y, 0, 0, radius * 2, img, sim, reliability, communication_noise)
+        super().__init__(x, y, 0, 0, radius * 2, img, sim, reliability, communication_noise, random.randrange(1, 100000))
 
         self.name = name
 
@@ -748,37 +701,27 @@ class Drone(Agent):
 
     def update(self):
 
-        # Momentum
-        '''
-        x,y = self.get_gradient_velocity()
-        t = 0.1
-        self.change_x = t*self.change_x + (1-t)*x
-        self.change_y = t*self.change_y + (1-t)*y
-        '''
-
         if self.simulation.GP == True:
             if self.simulation.timer % self.simulation.gp_step == 0:
                 self.predict_belief_map2()
 
-        self.change_x, self.change_y = self.get_gradient_velocity()
-        self.change_x = self.change_x/6
-        self.change_y = self.change_y/6
+        if self.health >= -1000000:
+            self.change_x, self.change_y = self.get_gradient_velocity()
+            self.change_x = self.change_x/10
+            self.change_y = self.change_y/10
+            self.health -= random.randrange(0, 1, 10)/100
+            self.health_map[self.grid_pos_x][self.grid_pos_y] = self.health
+        else:
+            self.change_x = 0
+            self.change_y = 0
 
-        '''
-        positioning_noise_x = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
-        positioning_noise_y = random.uniform(-self.simulation.positioning_noise_strength, self.simulation.positioning_noise_strength)
-
-        if random.random() < self.simulation.positioning_noise_prob:
-            self.change_x = self.change_x + positioning_noise_x * self.simulation.ARENA_WIDTH/self.simulation.GRID_X
-            self.change_y = self.change_y + positioning_noise_y * self.simulation.ARENA_HEIGHT/self.simulation.GRID_Y
-        '''
         super().update()
 
         self.grid_pos_x = int(np.trunc((self.center_x * (self.simulation.GRID_X - 1) / self.simulation.ARENA_WIDTH)))
         self.grid_pos_y = int(
             np.trunc(((1 - self.center_y / self.simulation.ARENA_HEIGHT) * (self.simulation.GRID_Y - 1))))
 
-    def update_confidence_and_belief(self):
+    def update_confidence_and_belief_and_health(self):
         # aging drone's maps
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
         self.confidence_map[(self.confidence_map > -0.001) & (self.confidence_map < 0)] = 0.001
@@ -873,7 +816,7 @@ def find_nbs(matrix, indices):
     return nb_indexes
 
 
-def init_unity_server(self):
+def init_unity_serverUDP(self):
     print("Wait until Unity client connected...")
 
     # get the hostname
@@ -904,9 +847,24 @@ def init_unity_server(self):
         if self.clientIP[0] != "":
             break
 
-    print("Connection from: " + str(self.clientIP))
+    print("Connection UDP from: " + str(self.clientIP))
     return server_socket
 
+def init_unity_serverTCP(self):
+    # Create a socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Set the client socket's TCP "well-known port" number
+    port = 65432
+    sock.bind(('192.168.2.29', port))
+
+    # Set the number of clients waiting for connection that can be queued
+    sock.listen(1)
+    while 1:
+        newSocket, address = sock.accept()
+        print("Connected TCP from", address)
+
+        return newSocket
 
 class SwarmSimulator(arcade.Window):
 
@@ -1006,7 +964,13 @@ class SwarmSimulator(arcade.Window):
 
         if exp_type == "unity_network":
             self.clientIP = ""
-            self.UNITY_CONN = init_unity_server(self)
+            self.UNITY_CONN = init_unity_serverUDP(self)
+            print("UDP conn success!")
+            self.UNITY_CONN_TCP = init_unity_serverTCP(self)
+            tcpThread = threading.Thread(target=self.recive_unity_update, args=[])
+            tcpThread.daemon = True
+            tcpThread.start()
+
 
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         # super().set_location(50,50)
@@ -1346,6 +1310,7 @@ class SwarmSimulator(arcade.Window):
 
             # Toggle button
             def c_button_action(event):
+                print("Button click")
                 if self.c_button_txt == "Real Environment":
                     self.axes[1, 0].set_visible(False)
                     self.p_ax.set_visible(True)
@@ -1505,11 +1470,23 @@ class SwarmSimulator(arcade.Window):
         drones_id = []
         drones_x_pos = []
         drones_y_pos = []
+
+        send_health = 0
+
         for drone in self.drone_list:
             # Swap x and y because unity use another coordinate system
             drones_x_pos.append(drone.center_y)
             drones_y_pos.append(drone.center_x)
             drones_id.append(drone.name)
+
+            tmp_health_map = np.trim_zeros(drone.health_map.flatten())
+            send_health += np.mean(tmp_health_map)
+
+        decay_value = 2.9
+        send_health = send_health / len(self.drone_list)
+        send_health = send_health + self.timer/60 * decay_value
+        if send_health > 100:
+            send_health = 100
 
         # Serialization Human position
         humans = len(self.operator_list)
@@ -1529,10 +1506,28 @@ class SwarmSimulator(arcade.Window):
                 "humans_x": humans_x_pos,
                 "humans_y": humans_y_pos,
                 "internal_map": self.operator_list[0].internal_map.tolist(),
-                "confidence_map": self.operator_list[0].confidence_map.tolist()}
+                "confidence_map": self.operator_list[0].confidence_map.tolist(),
+                "health": send_health,
+                "known_drones": len(self.operator_list[0].known_drones)}
 
         self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
 
+        for value in self.operator_list[0].internal_map:
+            value = 1
+
+    def recive_unity_update(self):
+        while 1:
+            data = self.UNITY_CONN_TCP.recv(65535)
+            if not data:
+                continue
+            data = data.decode("UTF-8")
+            mask = np.array(json.loads(data))
+
+            for x in range(40):
+                for y in range(40):
+                    self.operator_list[0].confidence_map[x][y] = mask[x][y]
+
+            print("markermap was recived successfully!")
     def update_map(self):
         self.global_map = [[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]
 
@@ -1858,7 +1853,7 @@ class SwarmSimulator(arcade.Window):
             self.u_fig.canvas.flush_events()
             self.s_fig.canvas.flush_events()
             self.u_fig.canvas.draw()
-            # self.s_fig.show()
+            self.s_fig.show()
             self.s_fig.canvas.draw()
 
             # Changing confidence for active rectangle rects
@@ -1910,7 +1905,7 @@ class SwarmSimulator(arcade.Window):
         self.drones_positions += current_positions
 
         for drone in self.drone_list:
-            drone.update_confidence_and_belief()
+            drone.update_confidence_and_belief_and_health()
 
         if self.constant_repulsion == True:
             for operator in self.operator_list:
@@ -2427,9 +2422,7 @@ class SwarmSimulator(arcade.Window):
                 else:
                     self.click_map.append((1, x_r, y_r))
 
-                # annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1),
-                #                                      color="red", fontsize=10)
-                # self.annotes.append([annotation, 1])
+                 #annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), color="red", fontsize=10) self.annotes.append([annotation, 1])
 
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))
             else:
