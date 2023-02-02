@@ -194,7 +194,7 @@ def user_study2(swarm_size = 50,  vs_range=1, vs_radius=40, alpha = 0.99, t = 30
     return cmds
 
 # VS Bachelor
-def vr_interface(swarm_size = 10, disaster_size = 1, move = "false"):
+def vr_interface(swarm_size = 20, disaster_size = 1, move = "false"):
     cmds = ['-name VR_Interface{}'.format(swarm_size) + ' -size ' + str(swarm_size) + ' -d_size ' + str(disaster_size) + ' -exp_type unity_network -run_time 100000 -op_x 300 -op_y 300']
     return cmds
 

@@ -10,6 +10,7 @@ from scipy.ndimage import gaussian_filter
 import math
 import time
 import matplotlib
+
 matplotlib.use('MacOSX')
 from matplotlib import pyplot as plt
 
@@ -37,7 +38,6 @@ from c_widgets import Annotate
 import socket
 import json
 from threading import Thread
-from json import JSONEncoder
 
 warnings.filterwarnings("ignore")
 
@@ -209,7 +209,6 @@ class Agent(Object):
                             j] + coeff * self.communication_noise
                         agent.confidence_map[i][j] = self.confidence_map[i][j] + coeff * self.communication_noise
 
-
     def exchange_data(self, agent, how):
 
         coeff = 0
@@ -239,13 +238,13 @@ class Agent(Object):
         # AVG confidence
         ll_a_mask = np.bitwise_or(self.confidence_map < 0.8, self.confidence_map > 0.8)
         np.putmask(agent.internal_map, ll_a_mask, (
-                    self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise)
+                self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise)
         np.putmask(agent.confidence_map, ll_a_mask,
                    (self.confidence_map + agent.confidence_map) / 2 + coeff * self.communication_noise)
 
         ll_s_mask = np.bitwise_or(agent.internal_map < 0.8, agent.internal_map > 0)
         np.putmask(self.internal_map, ll_s_mask, (
-                    self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise)
+                self.reliability * self.internal_map + agent.reliability * agent.internal_map) / 2 + coeff * self.communication_noise)
         np.putmask(self.confidence_map, ll_s_mask,
                    (self.confidence_map + agent.confidence_map) / 2 + coeff * self.communication_noise)
 
@@ -265,13 +264,14 @@ class Agent(Object):
         self.health_map[self.grid_pos_x][self.grid_pos_y] = health_value
         agent.health_map[agent.grid_pos_x][agent.grid_pos_y] = health_value
 
-        #Swarm Size
+        # Swarm Size
         tmpList = list(set(self.known_drones) | set(agent.known_drones))
         self.known_drones = tmpList
         agent.known_drones = tmpList
 
-        #self.health_map = gaussian_filter(self.health_map, sigma=0.4)
-        #agent.health_map = gaussian_filter(agent.health_map, sigma=0.4)
+        # self.health_map = gaussian_filter(self.health_map, sigma=0.4)
+        # agent.health_map = gaussian_filter(agent.health_map, sigma=0.4)
+
     def is_obstacle_at_position(self, k, j):
 
         obstacle = False
@@ -323,7 +323,7 @@ class Human(Agent):
         # if self.simulation.timer == 10 or self.simulation.timer%100 == 0:
         # self.simulation.save_one_heatmap(self.internal_map, 'belief_' + str(self.simulation.timer), self.simulation.directory)
 
-        #if self.simulation.timer % 100 == 0:
+        # if self.simulation.timer % 100 == 0:
         #    self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer),
         #                                     self.simulation.directory)
 
@@ -399,7 +399,8 @@ Class Drone
 class Drone(Agent):
     def __init__(self, x, y, speed, radius, name, sim, img='images/drone.png', reliability=1, communication_noise=0):
 
-        super().__init__(x, y, 0, 0, radius * 2, img, sim, reliability, communication_noise, random.randrange(1, 100000))
+        super().__init__(x, y, 0, 0, radius * 2, img, sim, reliability, communication_noise,
+                         random.randrange(1, 100000))
 
         self.name = name
 
@@ -491,7 +492,7 @@ class Drone(Agent):
             #############################################################################################
             return np.sum(
                 np.multiply(self.confidence_map, template[j:jj, i:ii])) + self.simulation.BOUNDARY_REPULSION * (
-                   # Time: 8.1% ######## Hits: 600000 ######## Per Hit: 1.3
+                       # Time: 8.1% ######## Hits: 600000 ######## Per Hit: 1.3
                            np.sum(template[:j, :]) + np.sum(template[jj:, :]) + np.sum(template[j:jj, :i]) + np.sum(
                        template[j:jj, ii:]))  # Time: 14.7% ######## Hits: 300000 ######## Per Hit: 42.4
             #############################################################################################
@@ -707,9 +708,9 @@ class Drone(Agent):
 
         if self.health >= -1000000:
             self.change_x, self.change_y = self.get_gradient_velocity()
-            self.change_x = self.change_x/10
-            self.change_y = self.change_y/10
-            self.health -= random.randrange(0, 1, 10)/100
+            self.change_x = self.change_x / 10
+            self.change_y = self.change_y / 10
+            self.health -= random.randrange(0, 1, 10) / 100
             self.health_map[self.grid_pos_x][self.grid_pos_y] = self.health
         else:
             self.change_x = 0
@@ -840,7 +841,7 @@ def init_unity_serverUDP(self):
         RECV_BUF_SIZE)
 
     # Wait for client
-    while(True):
+    while (True):
         bytesAddressPair = server_socket.recvfrom(1024)
         address = bytesAddressPair[1]
         self.clientIP = address
@@ -849,6 +850,7 @@ def init_unity_serverUDP(self):
 
     print("Connection UDP from: " + str(self.clientIP))
     return server_socket
+
 
 def init_unity_serverTCP(self):
     # Create a socket
@@ -865,6 +867,7 @@ def init_unity_serverTCP(self):
         print("Connected TCP from", address)
 
         return newSocket
+
 
 class SwarmSimulator(arcade.Window):
 
@@ -970,7 +973,6 @@ class SwarmSimulator(arcade.Window):
             tcpThread = threading.Thread(target=self.recive_unity_update, args=[])
             tcpThread.daemon = True
             tcpThread.start()
-
 
         super().__init__(ARENA_WIDTH, ARENA_HEIGHT, ARENA_TITLE)
         # super().set_location(50,50)
@@ -1467,7 +1469,6 @@ class SwarmSimulator(arcade.Window):
     def send_unity_update(self):
         # Serialization Drones position
         drones = len(self.drone_list)
-        drones_id = []
         drones_x_pos = []
         drones_y_pos = []
 
@@ -1477,16 +1478,21 @@ class SwarmSimulator(arcade.Window):
             # Swap x and y because unity use another coordinate system
             drones_x_pos.append(drone.center_y)
             drones_y_pos.append(drone.center_x)
-            drones_id.append(drone.name)
 
             tmp_health_map = np.trim_zeros(drone.health_map.flatten())
             send_health += np.mean(tmp_health_map)
 
         decay_value = 2.9
         send_health = send_health / len(self.drone_list)
-        send_health = send_health + self.timer/60 * decay_value
+        send_health = send_health + self.timer / 60 * decay_value
         if send_health > 100:
             send_health = 100
+
+        # Send fires
+        dis = []
+        for disaster in self.disaster_list:
+            dis.append(disaster.center_x)
+            dis.append(disaster.center_y)
 
         # Serialization Human position
         humans = len(self.operator_list)
@@ -1498,17 +1504,17 @@ class SwarmSimulator(arcade.Window):
             humans_y_pos.append(human.center_x)
 
         data = {
-                "drones": drones,
-                "drones_name": drones_id,
-                "drones_x": drones_x_pos,
-                "drones_y": drones_y_pos,
-                "humans": humans,
-                "humans_x": humans_x_pos,
-                "humans_y": humans_y_pos,
-                "internal_map": self.operator_list[0].internal_map.tolist(),
-                "confidence_map": self.operator_list[0].confidence_map.tolist(),
-                "health": send_health,
-                "known_drones": len(self.operator_list[0].known_drones)}
+            "drones": drones,
+            "drones_x": drones_x_pos,
+            "drones_y": drones_y_pos,
+            "humans": humans,
+            "humans_x": humans_x_pos,
+            "humans_y": humans_y_pos,
+            "internal_map": self.operator_list[0].internal_map.tolist(),
+            "confidence_map": self.operator_list[0].confidence_map.tolist(),
+            "health": send_health,
+            "known_drones": len(self.operator_list[0].known_drones),
+            "disaster": dis}
 
         self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
 
@@ -1517,17 +1523,31 @@ class SwarmSimulator(arcade.Window):
 
     def recive_unity_update(self):
         while 1:
-            data = self.UNITY_CONN_TCP.recv(65535)
-            if not data:
-                continue
-            data = data.decode("UTF-8")
-            mask = np.array(json.loads(data))
+            try:
+                all_data = []
+                data = self.UNITY_CONN_TCP.recv(65535)
+                if not data:
+                    continue
 
-            for x in range(40):
-                for y in range(40):
-                    self.operator_list[0].confidence_map[x][y] = mask[x][y]
+                while 1:
+                    all_data.append(data.decode("UTF-8"))
+                    if "\n" in data.decode("UTF-8"):
+                        break
+                    data = self.UNITY_CONN_TCP.recv(65535)
 
-            print("markermap was recived successfully!")
+                data = "".join(all_data)
+
+                mask = np.array(json.loads(data))
+                for x in range(40):
+                    for y in range(40):
+                        self.operator_list[0].confidence_map[x][y] = mask[x][y]
+
+                print("markermap was recived successfully!")
+            except:
+                print("markermap fails!")
+
+
+
     def update_map(self):
         self.global_map = [[0 for i in range(self.GRID_X)] for j in range(self.GRID_Y)]
 
@@ -2049,7 +2069,7 @@ class SwarmSimulator(arcade.Window):
             for i in range(self.GRID_Y):
                 for j in range(self.GRID_X):
                     self.operator_list[0].confidence_map[i][j] = (j / self.GRID_X - 1) * alpha + (
-                                i / self.GRID_Y - 1) * alpha
+                            i / self.GRID_Y - 1) * alpha
         elif where == 'center attract':
             value = 0
             for i in range(self.GRID_Y):
@@ -2111,7 +2131,7 @@ class SwarmSimulator(arcade.Window):
         # Rescale to 0-255 and convert to uint8
         rescaled_conf = (255.0 * (data_conf - data_conf.min()) / (data_conf.max() - data_conf.min())).astype(np.uint8)
         rescaled_internal = (
-                    255.0 * (data_internal - data_internal.min()) / (data_internal.max() - data_internal.min())).astype(
+                255.0 * (data_internal - data_internal.min()) / (data_internal.max() - data_internal.min())).astype(
             np.uint8)
         rescaled_global = (255.0 * (data_global - data_global.min()) / (data_global.max() - data_global.min())).astype(
             np.uint8)
@@ -2291,7 +2311,7 @@ class SwarmSimulator(arcade.Window):
                             r = np.sqrt((i - x_grid) ** 2 + (j - y_grid) ** 2)
                             r = 1 - r / (self.GRID_X / 2)
                             self.picked_drone.confidence_map[j][self.GRID_X - 1 - i] = \
-                            self.picked_drone.confidence_map[j][self.GRID_X - 1 - i] - r / 2
+                                self.picked_drone.confidence_map[j][self.GRID_X - 1 - i] - r / 2
 
                     print("{} to position ({},{})".format(self.picked_drone.name.title(), x_grid, y_grid))
                     # self.display_selected_drone_info(self.picked_drone)
@@ -2310,53 +2330,54 @@ class SwarmSimulator(arcade.Window):
                     self.click_map.append((1, x_gr, y_gr))
 
     def on_draw(self):
-        # Start timing how long this takes
-        draw_start_time = timeit.default_timer()
+        if self.exp_type != "unity_network":
+            # Start timing how long this takes
+            draw_start_time = timeit.default_timer()
 
-        arcade.start_render()
-        self.operator_list.draw()
-        self.disaster_list.draw()
-        self.drone_list.draw()
+            arcade.start_render()
+            self.operator_list.draw()
+            self.disaster_list.draw()
+            self.drone_list.draw()
 
-        if self.maze != None:
-            self.obstacle_list.draw()
+            if self.maze != None:
+                self.obstacle_list.draw()
 
-        self.draw_time = timeit.default_timer() - draw_start_time
-        self.fps.tick()
-        if self.exp_type != "user_study":
-            arcade.draw_text("Timesteps: {}/{}".format(self.timer, self.run_time), self.ARENA_WIDTH / 2,
-                             self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
-        if self.exp_type == "normal_network":
-            arcade.draw_text("Online", self.ARENA_WIDTH / 2,
-                             self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
-        elif self.exp_type == "user_study_2":
-            arcade.draw_text("User study 2", self.ARENA_WIDTH / 2,
-                             self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
-        elif self.exp_type == "user_study":
-            if self.timer > 1:
-                t_now_s = int(self.u_timer) % 60
-                t_now_m = int(self.u_timer) // 60
-                arcade.draw_text(f"{t_now_m}m:{t_now_s}s", self.ARENA_WIDTH / 2,
-                                 self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
+            self.draw_time = timeit.default_timer() - draw_start_time
+            self.fps.tick()
+            if self.exp_type != "user_study":
+                arcade.draw_text("Timesteps: {}/{}".format(self.timer, self.run_time), self.ARENA_WIDTH / 2,
+                                 self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 15, anchor_x='center')
+            if self.exp_type == "normal_network":
+                arcade.draw_text("Online", self.ARENA_WIDTH / 2,
+                                 self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+            elif self.exp_type == "user_study_2":
+                arcade.draw_text("User study 2", self.ARENA_WIDTH / 2,
+                                 self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
+            elif self.exp_type == "user_study":
+                if self.timer > 1:
+                    t_now_s = int(self.u_timer) % 60
+                    t_now_m = int(self.u_timer) // 60
+                    arcade.draw_text(f"{t_now_m}m:{t_now_s}s", self.ARENA_WIDTH / 2,
+                                     self.ARENA_HEIGHT - 40, arcade.color.ASH_GREY, 20, anchor_x='center')
+                else:
+                    pass
+                arcade.draw_text("User study 1", self.ARENA_WIDTH / 2,
+                                 self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
+                if self.picked_drone:
+                    arcade.draw_text("{} selected, now point to the location and release the button!".format(
+                        self.picked_drone.name.title()), self.ARENA_WIDTH / 2,
+                        20, arcade.color.GO_GREEN, 9, anchor_x='center')
+                elif self.timer == 1:
+                    arcade.draw_rectangle_filled(self.ARENA_WIDTH / 2, self.ARENA_HEIGHT / 2 + 8, self.ARENA_WIDTH, 40,
+                                                 arcade.color.ASH_GREY)
+                    arcade.draw_text("Please enter your name in the terminal to start.", self.ARENA_WIDTH / 2,
+                                     self.ARENA_HEIGHT / 2, arcade.color.BLACK, 15, anchor_x='center')
+                else:
+                    arcade.draw_text("Select a drone by right-clicking and not releasing button!", self.ARENA_WIDTH / 2,
+                                     20, arcade.color.RED, 9, anchor_x='center')
             else:
-                pass
-            arcade.draw_text("User study 1", self.ARENA_WIDTH / 2,
-                             self.ARENA_HEIGHT - 55, arcade.color.ASH_GREY, 10, anchor_x='center')
-            if self.picked_drone:
-                arcade.draw_text("{} selected, now point to the location and release the button!".format(
-                    self.picked_drone.name.title()), self.ARENA_WIDTH / 2,
-                                 20, arcade.color.GO_GREEN, 9, anchor_x='center')
-            elif self.timer == 1:
-                arcade.draw_rectangle_filled(self.ARENA_WIDTH / 2, self.ARENA_HEIGHT / 2 + 8, self.ARENA_WIDTH, 40,
-                                             arcade.color.ASH_GREY)
-                arcade.draw_text("Please enter your name in the terminal to start.", self.ARENA_WIDTH / 2,
-                                 self.ARENA_HEIGHT / 2, arcade.color.BLACK, 15, anchor_x='center')
-            else:
-                arcade.draw_text("Select a drone by right-clicking and not releasing button!", self.ARENA_WIDTH / 2,
-                                 20, arcade.color.RED, 9, anchor_x='center')
-        else:
-            arcade.draw_text("Stand-alone", self.ARENA_WIDTH / 2,
-                             self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
+                arcade.draw_text("Stand-alone", self.ARENA_WIDTH / 2,
+                                 self.ARENA_HEIGHT - 60, arcade.color.ASH_GREY, 10, anchor_x='center')
 
     def send_data(self, operator):
         """
@@ -2411,7 +2432,7 @@ class SwarmSimulator(arcade.Window):
                         r = np.sqrt((i - x_r) ** 2 + (j - y_r) ** 2)
                         r = 1 - r / (self.GRID_X / 2)
                         self.operator_list[0].confidence_map[j][self.GRID_X - 1 - i] = \
-                        self.operator_list[0].confidence_map[j][self.GRID_X - 1 - i] - r / 2
+                            self.operator_list[0].confidence_map[j][self.GRID_X - 1 - i] - r / 2
 
                 c_i = None
                 for click in self.click_map:
@@ -2422,7 +2443,7 @@ class SwarmSimulator(arcade.Window):
                 else:
                     self.click_map.append((1, x_r, y_r))
 
-                 #annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), color="red", fontsize=10) self.annotes.append([annotation, 1])
+                # annotation = self.axes[0,1].annotate("*", xy=(math.trunc(event.xdata) + 0.2, math.trunc(event.ydata) + 1), color="red", fontsize=10) self.annotes.append([annotation, 1])
 
                 print("Clicked on {}, {} inside confidence map".format(x_r, y_r))
             else:
