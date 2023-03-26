@@ -152,8 +152,6 @@ class Agent(Object):
             [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
         self.internal_map = np.array(
             [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
-        self.health_map = np.array(
-            [[0.0 for i in range(self.simulation.GRID_X)] for j in range(self.simulation.GRID_Y)])
 
         self.reliability = reliability
         self.communication_noise = communication_noise
@@ -176,38 +174,12 @@ class Agent(Object):
             self.known_drones = []
 
     def update(self):
-        # sensing_noise = np.random.uniform(0, self.simulation.sensing_noise_strength, (self.simulation.GRID_Y, self.simulation.GRID_X))
-
-        # s = random.uniform(0, self.simulation.sensing_noise_strength)
-
-        # if random.random() < self.simulation.sensing_noise_prob:
-        #    self.internal_map *= (1-s)
-
         super().update()
 
     def communicate(self, agent, how):
         self.exchange_data(agent, how)
         self.message_count_succ += 1
         self.have_communicated = True
-
-    def exchange_data_old(self, agent, how):
-        '''if (random.randrange(0, 100) < 50):
-            coeff = +1
-        else:
-            coeff = -1
-        '''
-        coeff = 0
-        if how == 'max':
-            for j in range(self.simulation.GRID_X):
-                for i in range(self.simulation.GRID_Y):
-                    if (agent.confidence_map[i][j] > self.confidence_map[i][j]):
-                        self.internal_map[i][j] = agent.reliability * agent.internal_map[i][
-                            j] + coeff * self.communication_noise
-                        self.confidence_map[i][j] = agent.confidence_map[i][j] + coeff * self.communication_noise
-                    else:
-                        agent.internal_map[i][j] = self.reliability * self.internal_map[i][
-                            j] + coeff * self.communication_noise
-                        agent.confidence_map[i][j] = self.confidence_map[i][j] + coeff * self.communication_noise
 
     def exchange_data(self, agent, how):
 
@@ -248,30 +220,10 @@ class Agent(Object):
         np.putmask(self.confidence_map, ll_s_mask,
                    (self.confidence_map + agent.confidence_map) / 2 + coeff * self.communication_noise)
 
-        # Health
-        for j in range(self.simulation.GRID_X):
-            for i in range(self.simulation.GRID_Y):
-                if agent.health_map[i][j] > self.health_map[i][j]:
-                    self.health_map[i][j] = agent.reliability * agent.health_map[i][
-                        j] + coeff * self.communication_noise
-                    self.health_map[i][j] = agent.health_map[i][j] + coeff * self.communication_noise
-                else:
-                    agent.health_map[i][j] = self.reliability * self.health_map[i][
-                        j] + coeff * self.communication_noise
-                    agent.health_map[i][j] = self.health_map[i][j] + coeff * self.communication_noise
-
-        health_value = (self.health + agent.health) / 2
-        self.health_map[self.grid_pos_x][self.grid_pos_y] = health_value
-        agent.health_map[agent.grid_pos_x][agent.grid_pos_y] = health_value
-
         # Swarm Size
         tmpList = list(set(self.known_drones) | set(agent.known_drones))
         self.known_drones = tmpList
         agent.known_drones = tmpList
-
-        # self.health_map = gaussian_filter(self.health_map, sigma=0.4)
-        # agent.health_map = gaussian_filter(agent.health_map, sigma=0.4)
-
     def is_obstacle_at_position(self, k, j):
 
         obstacle = False
@@ -311,21 +263,9 @@ class Human(Agent):
         self.confidence_map *= self.simulation.LOSING_CONFIDENCE_RATE
         self.confidence_map[(self.confidence_map > -0.001) & (self.confidence_map < 0)] = 0.001
         self.internal_map *= self.simulation.LOSING_CONFIDENCE_RATE
-        self.health_map += 0.0001
-        self.health_map[(self.health_map > -0.001) & (self.health_map < 0)] = 0.001
 
-        '''
-        t0 = self.simulation.INPUT_TIME - 1
-        t1 = self.simulation.INPUT_TIME + 50
-        if self.simulation.timer == t0 or self.simulation.timer == t1 or self.simulation.timer == t1 + 50 or self.simulation.timer == t1 + 100 or self.simulation.timer == t1 + 150 or self.simulation.timer == t1 + 200 or self.simulation.timer == t1 + 250 or self.simulation.timer == t1 + 300 or self.simulation.timer == t1 + 350 or self.simulation.timer == t1 + 400 or self.simulation.timer == t1 + 450 or self.simulation.timer == t1 + 500 or self.simulation.timer == t1 + 550 or self.simulation.timer == t1 + 600 or self.simulation.timer == t1 + 650:
-            self.simulation.save_one_heatmap(self.internal_map, 'belief_' + str(self.simulation.timer), self.simulation.directory)
-        '''
-        # if self.simulation.timer == 10 or self.simulation.timer%100 == 0:
-        # self.simulation.save_one_heatmap(self.internal_map, 'belief_' + str(self.simulation.timer), self.simulation.directory)
 
-        # if self.simulation.timer % 100 == 0:
-        #    self.simulation.save_one_heatmap(self.confidence_map, 'confidence_' + str(self.simulation.timer),
-        #                                     self.simulation.directory)
+
 
         if gp_operator == True:
             if self.simulation.timer % 100 == 0:
@@ -706,12 +646,11 @@ class Drone(Agent):
             if self.simulation.timer % self.simulation.gp_step == 0:
                 self.predict_belief_map2()
 
-        if self.health >= -1000000:
+        if self.health >= 0:
             self.change_x, self.change_y = self.get_gradient_velocity()
-            self.change_x = self.change_x / 10
-            self.change_y = self.change_y / 10
-            self.health -= random.randrange(0, 1, 10) / 100
-            self.health_map[self.grid_pos_x][self.grid_pos_y] = self.health
+            self.change_x = self.change_x / 13
+            self.change_y = self.change_y / 13
+            self.health -= 0.00001
         else:
             self.change_x = 0
             self.change_y = 0
@@ -828,8 +767,8 @@ def init_unity_serverUDP(self):
     # look closely. The bind() function takes tuple as argument
     server_socket.bind((host, port))  # bind host address and port together
 
-    SEND_BUF_SIZE = 65000
-    RECV_BUF_SIZE = 65000
+    SEND_BUF_SIZE = 65507
+    RECV_BUF_SIZE = 65507
 
     server_socket.setsockopt(
         socket.SOL_SOCKET,
@@ -1478,21 +1417,10 @@ class SwarmSimulator(arcade.Window):
             # Swap x and y because unity use another coordinate system
             drones_x_pos.append(drone.center_y)
             drones_y_pos.append(drone.center_x)
+            # Calculate health value
+            send_health += drone.health
 
-            tmp_health_map = np.trim_zeros(drone.health_map.flatten())
-            send_health += np.mean(tmp_health_map)
-
-        decay_value = 2.9
         send_health = send_health / len(self.drone_list)
-        send_health = send_health + self.timer / 60 * decay_value
-        if send_health > 100:
-            send_health = 100
-
-        # Send fires
-        dis = []
-        for disaster in self.disaster_list:
-            dis.append(disaster.center_x)
-            dis.append(disaster.center_y)
 
         # Serialization Human position
         humans = len(self.operator_list)
@@ -1503,6 +1431,12 @@ class SwarmSimulator(arcade.Window):
             humans_x_pos.append(human.center_y)
             humans_y_pos.append(human.center_x)
 
+        # Serialization disaster
+        dis = []
+        for disaster in self.disaster_list:
+            dis.append(disaster.center_x)
+            dis.append(disaster.center_y)
+
         data = {
             "drones": drones,
             "drones_x": drones_x_pos,
@@ -1510,16 +1444,14 @@ class SwarmSimulator(arcade.Window):
             "humans": humans,
             "humans_x": humans_x_pos,
             "humans_y": humans_y_pos,
-            "internal_map": self.operator_list[0].internal_map.tolist(),
-            "confidence_map": self.operator_list[0].confidence_map.tolist(),
             "health": send_health,
             "known_drones": len(self.operator_list[0].known_drones),
-            "disaster": dis}
+            "disaster": dis,
+            "internal_map": self.operator_list[0].internal_map.tolist(),
+            "confidence_map": self.operator_list[0].confidence_map.tolist()
+        }
 
-        self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)  # send data to the client
-
-        for value in self.operator_list[0].internal_map:
-            value = 1
+        self.UNITY_CONN.sendto((json.dumps(data) + "\n").encode(), self.clientIP)
 
     def recive_unity_update(self):
         while 1:
